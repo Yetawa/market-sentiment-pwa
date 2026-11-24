@@ -807,20 +807,32 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
   }
 
+  /* 判断某根缓存K线是否就是快照这一天的数据（价格差 < 0.011 元、量差 < 0.2%） */
+  function barIsSnapshot(k, i, s) {
+    return Math.abs(k.o[i] / 1000 - s.open) < 0.011 && Math.abs(k.h[i] / 1000 - s.high) < 0.011 &&
+      Math.abs(k.l[i] / 1000 - s.low) < 0.011 && Math.abs(k.c[i] / 1000 - s.close) < 0.011 &&
+      Math.abs(k.v[i] - s.vol) <= Math.max(1, s.vol * 0.002);
+  }
+
   /* 用当日快照写入「今日」K线：缓存里已有今日则覆盖为最新，没有则追加。
      盘中反复刷新即可持续更新，收盘后再次刷新会被收盘数据覆盖。
-     判定只用缓存自己最后一根的真实日期（k.bd / k.cl），绝不用 meta.lastDate 兜底：
-     否则「清空今日」后 bd 为空，会被误判成「今日已存在」，把昨日那根改成今天的价格。 */
+     判定同时看日期和数据本身：多标签页/旧版本并发写入可能把同一天写成两遍，
+     重复的那根会让量能参照整体错位（选股结果随之错），所以先做去重修复。 */
   function applyTodayBars(snap, K) {
-    var entries = [], added = 0, updated = 0;
+    var entries = [], added = 0, updated = 0, fixed = 0;
     snap.forEach(function (s) {
       var k = K.get(s.code);
       if (!k || !(s.close > 0) || !(s.vol > 0) || !s.barDate || k.n < 1) return;
       var n = k.n, same;
+      // 最后两根都与今日快照完全一致 → 同一天被写了两遍，删掉多出来的那根
+      if (n >= 2 && barIsSnapshot(k, n - 1, s) && barIsSnapshot(k, n - 2, s)) {
+        k.o = k.o.slice(0, n - 1); k.h = k.h.slice(0, n - 1); k.l = k.l.slice(0, n - 1);
+        k.c = k.c.slice(0, n - 1); k.v = k.v.slice(0, n - 1);
+        n = n - 1; k.n = n; fixed++;
+      }
       if (k.cl) same = false;                        // 今日已被清空：必须重新追加
-      else if (k.bd) same = (k.bd === s.barDate);    // 最后一根日期已知：同日覆盖、异日追加
-      else same = Math.abs(k.c[n - 1] / 1000 - s.close) < 0.011 &&   // 老缓存无日期：
-        Math.abs(k.v[n - 1] - s.vol) <= Math.max(1, s.vol * 0.002);  // 价格+成交量双匹配才认作同一根
+      else if (k.bd) same = (k.bd === s.barDate) || barIsSnapshot(k, n - 1, s);
+      else same = barIsSnapshot(k, n - 1, s);        // 无日期：数据完全一致即同一根
       if (same) {
         k.o[n - 1] = Math.round(s.open * 1000);
         k.h[n - 1] = Math.round(s.high * 1000);
@@ -842,8 +854,8 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       }
       entries.push({ code: s.code, v: k });
     });
-    if (!entries.length) return Promise.resolve({ added: 0, updated: 0 });
-    return putKlines(entries).then(function () { return { added: added, updated: updated }; });
+    if (!entries.length) return Promise.resolve({ added: 0, updated: 0, fixed: 0 });
+    return putKlines(entries).then(function () { return { added: added, updated: updated, fixed: fixed }; });
   }
 
   /* 清掉缓存里的「今日」那根 K线（剔除盘中过程数据） */
@@ -851,10 +863,15 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     var t = todayStr(), entries = [], cnt = 0;
     K.forEach(function (k, code) {
       if (k.bd === t && k.n > 1) {
-        var n = k.n - 1;
-        k.o = k.o.slice(0, n); k.h = k.h.slice(0, n); k.l = k.l.slice(0, n);
-        k.c = k.c.slice(0, n); k.v = k.v.slice(0, n);
-        k.n = n; k.bd = ''; k.cl = 1;
+        var n0 = k.n, cut = n0 - 1;
+        // 若最后两根完全相同且量非零，说明今天被写了两遍，一起清掉
+        if (n0 >= 3 && k.v[n0 - 1] > 0 &&
+          k.o[n0 - 1] === k.o[n0 - 2] && k.h[n0 - 1] === k.h[n0 - 2] && k.l[n0 - 1] === k.l[n0 - 2] &&
+          k.c[n0 - 1] === k.c[n0 - 2] && k.v[n0 - 1] === k.v[n0 - 2]) cut = n0 - 2;
+        if (cut < 1) return;
+        k.o = k.o.slice(0, cut); k.h = k.h.slice(0, cut); k.l = k.l.slice(0, cut);
+        k.c = k.c.slice(0, cut); k.v = k.v.slice(0, cut);
+        k.n = cut; k.bd = ''; k.cl = 1;
         entries.push({ code: code, v: k });
         cnt++;
       }
@@ -1212,8 +1229,9 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         // 已有今日那根则覆盖为最新，缺失则追加；不再因「落后 N 天」而放弃更新。
         stage('更新今日日线', 84);
         var rr = await TDXData.applyTodayBars(snap, K);
-        if (rr.added || rr.updated) {
-          stage('今日日线：更新 ' + rr.updated + ' 只，追加 ' + rr.added + ' 只', 85);
+        if (rr.added || rr.updated || rr.fixed) {
+          stage('今日日线：更新 ' + rr.updated + ' 只，追加 ' + rr.added + ' 只'
+            + (rr.fixed ? '，修复重复K线 ' + rr.fixed + ' 只' : ''), 85);
         }
       }
 
@@ -1695,6 +1713,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       S.meta = m0;
       await TDXData.putMeta(m0);
       stage('同步完成：新增 ' + r.ok + ' 只 ｜ 今日K线 覆盖 ' + rr.updated + ' / 追加 ' + rr.added
+        + (rr.fixed ? ' ｜ 修复重复 ' + rr.fixed : '')
         + (lag.length ? ' ｜ 补拉 ' + lag.length + ' 只' + (rf && rf.failed ? '（失败 ' + rf.failed + '）' : '') : ''), 100);
       updateMeta();
       refreshPanel();
