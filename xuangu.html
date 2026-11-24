@@ -125,6 +125,7 @@ box-shadow:0 1px 3px rgba(44,62,80,.06)}
 .panel .pt{font-size:13px;color:var(--dim);line-height:2;margin-bottom:12px}
 .panel .pt b{color:var(--ink);font-weight:600}
 .panel .prow{display:flex;gap:9px}
+.panel .prow button{font-size:12.5px;padding:9px 0}
 .panel button{flex:1;font-size:13px;padding:10px 0;border-radius:8px;border:1px solid var(--line);
 background:#FAF8F3;color:var(--ink);font-weight:500}
 .panel button.warn{color:#A33;border-color:#E8CBCB;background:#FDF7F7}
@@ -167,6 +168,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     <div class="pt" id="ptxt">读取中…</div>
     <div class="prow">
       <button id="sync">同步日线</button>
+      <button id="ct">清空今日</button>
       <button id="wipe" class="warn">清空数据</button>
     </div>
     <div class="plabel">点股票名或代码，新窗口打开个股行情</div>
@@ -799,6 +801,61 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     });
   }
 
+  function todayStr() {
+    var d = new Date(), p = function (x) { return (x < 10 ? '0' : '') + x; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
+  /* 用当日快照写入「今日」K线：缓存里已有今日则覆盖为最新，没有则追加。
+     盘中反复刷新即可持续更新，收盘后再次刷新会被收盘数据覆盖。 */
+  function applyTodayBars(snap, K, fallbackDate) {
+    var entries = [], added = 0, updated = 0;
+    snap.forEach(function (s) {
+      var k = K.get(s.code);
+      if (!k || !(s.close > 0) || !(s.vol > 0) || !s.barDate) return;
+      var bd = k.bd || fallbackDate || '';
+      var n = k.n;
+      if (bd === s.barDate) {
+        k.o[n - 1] = Math.round(s.open * 1000);
+        k.h[n - 1] = Math.round(s.high * 1000);
+        k.l[n - 1] = Math.round(s.low * 1000);
+        k.c[n - 1] = Math.round(s.close * 1000);
+        k.v[n - 1] = Math.round(s.vol);
+        k.bd = s.barDate;
+        updated++;
+      } else {
+        var o = new Int32Array(n + 1), h = new Int32Array(n + 1), l = new Int32Array(n + 1),
+          c = new Int32Array(n + 1), v = new Int32Array(n + 1);
+        o.set(k.o); h.set(k.h); l.set(k.l); c.set(k.c); v.set(k.v);
+        o[n] = Math.round(s.open * 1000); h[n] = Math.round(s.high * 1000);
+        l[n] = Math.round(s.low * 1000); c[n] = Math.round(s.close * 1000);
+        v[n] = Math.round(s.vol);
+        k.o = o; k.h = h; k.l = l; k.c = c; k.v = v; k.n = n + 1; k.bd = s.barDate;
+        added++;
+      }
+      entries.push({ code: s.code, v: k });
+    });
+    if (!entries.length) return Promise.resolve({ added: 0, updated: 0 });
+    return putKlines(entries).then(function () { return { added: added, updated: updated }; });
+  }
+
+  /* 清掉缓存里的「今日」那根 K线（剔除盘中过程数据） */
+  function clearTodayBars(K) {
+    var t = todayStr(), entries = [], cnt = 0;
+    K.forEach(function (k, code) {
+      if (k.bd === t && k.n > 1) {
+        var n = k.n - 1;
+        k.o = k.o.slice(0, n); k.h = k.h.slice(0, n); k.l = k.l.slice(0, n);
+        k.c = k.c.slice(0, n); k.v = k.v.slice(0, n);
+        k.n = n; k.bd = '';
+        entries.push({ code: code, v: k });
+        cnt++;
+      }
+    });
+    if (!entries.length) return Promise.resolve(0);
+    return putKlines(entries).then(function () { return cnt; });
+  }
+
   function clearAll() {
     return db().then(function (d) {
       return new Promise(function (res) {
@@ -863,7 +920,9 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
           open: +f[5], high: +f[33], low: +f[34],
           close: price, prev: prev,
           vol: +f[6], turnover: +f[38],
-          pe: +f[39] || 0, nmc: (+f[44] || 0) * 10000
+          pe: +f[39] || 0, nmc: (+f[44] || 0) * 10000,
+          time: f[30] || '',
+          barDate: /^\d{8}/.test(f[30] || '') ? f[30].slice(0, 4) + '-' + f[30].slice(4, 6) + '-' + f[30].slice(6, 8) : ''
         });
       });
       return out;
@@ -912,7 +971,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         l[i] = Math.round(+r0[4] * 1000);
         v[i] = Math.round(+r0[5]);
       }
-      return { n: n, o: o, h: h, l: l, c: c, v: v };
+      return { n: n, o: o, h: h, l: l, c: c, v: v, bd: arr[arr.length - 1][0] };
     });
   }
 
@@ -975,7 +1034,10 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     putKlines: putKlines,
     getMeta: getMeta,
     putMeta: putMeta,
-    clearAll: clearAll
+    clearAll: clearAll,
+    todayStr: todayStr,
+    applyTodayBars: applyTodayBars,
+    clearTodayBars: clearTodayBars
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -1118,31 +1180,23 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
           stage('下载日线 ' + d + '/' + t + (f ? '（失败 ' + f + '）' : ''), 12 + 72 * d / t);
         });
         K = S.K = await TDXData.loadAllKlines();
-      } else if (S.meta.lastDate && S.meta.lastDate !== latest) {
-        var gap = (new Date(latest) - new Date(S.meta.lastDate)) / 86400000;
-        if (gap > 6) stage('本地数据落后 ' + Math.round(gap) + ' 天，建议先「同步日线」', 12);
-        else {
-          var entries = [];
-          snap.forEach(function (s) {
-            var k = K.get(s.code);
-            if (!k) return;
-            var n = k.n + 1;
-            var o = new Int32Array(n), h = new Int32Array(n), l = new Int32Array(n), c = new Int32Array(n), v = new Int32Array(n);
-            o.set(k.o); h.set(k.h); l.set(k.l); c.set(k.c); v.set(k.v);
-            o[n - 1] = Math.round(s.open * 1000); h[n - 1] = Math.round(s.high * 1000);
-            l[n - 1] = Math.round(s.low * 1000); c[n - 1] = Math.round(s.close * 1000);
-            v[n - 1] = Math.round(s.vol);
-            var nk = { n: n, o: o, h: h, l: l, c: c, v: v };
-            K.set(s.code, nk);
-            entries.push({ code: s.code, v: nk });
-          });
-          if (entries.length) await TDXData.putKlines(entries);
+        // 盘中首次下载时，日线接口还没有今天这一根，用当日快照补上
+        await TDXData.applyTodayBars(snap, K, '');
+      } else {
+        // 已有缓存：把当日行情写入缓存（盘中=过程数据，收盘后=最终数据），
+        // 已有今日那根则覆盖为最新，缺失则追加；不再因「落后 N 天」而放弃更新。
+        stage('更新今日日线', 84);
+        var rr = await TDXData.applyTodayBars(snap, K, S.meta.lastDate);
+        if (rr.added || rr.updated) {
+          stage('今日日线：更新 ' + rr.updated + ' 只，追加 ' + rr.added + ' 只', 85);
         }
       }
 
       var stk = {};
       snap.forEach(function (s) { stk[s.code] = [s.name, s.nmc, s.pe]; });
-      S.meta = { lastDate: latest, updatedAt: Date.now(), stocks: stk, count: snap.length };
+      var todayS = TDXData.todayStr();
+      var barDate = (K.size && K.values().next().value && K.values().next().value.bd) || latest;
+      S.meta = { lastDate: (barDate && barDate > latest) ? barDate : latest, updatedAt: Date.now(), stocks: stk, count: snap.length };
       await TDXData.putMeta(S.meta);
 
       stage('计算六大策略', 86);
@@ -1320,9 +1374,12 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
             var tags = [];
             for (var s = 0; s < STRATS.length; s++) if (r[STRATS[s]][idx]) tags.push(STRATS[s]);
             if (!tags.length) continue;
+            // 攻防是 9:25 竞价策略，入选价取当日开盘价；其余策略为尾盘，取收盘价
+            var atk = tags.indexOf('攻防') >= 0;
+            var p0 = atk ? o[idx] : c[idx];
             picks.push({
-              code: code, name: info[0], tags: tags, off: off,
-              p0: c[idx], chg: (c[idx] / c[idx - 1] - 1) * 100, last: lastN,
+              code: code, name: info[0], tags: tags, off: off, atk: atk,
+              p0: p0, chg: (p0 / c[idx - 1] - 1) * 100, last: lastN,
               r1: k.n >= 2 ? (lastN / c[k.n - 2] - 1) * 100 : null,
               r3: k.n >= 4 ? (lastN / c[k.n - 4] - 1) * 100 : null,
               r5: k.n >= 6 ? (lastN / c[k.n - 6] - 1) * 100 : null,
@@ -1451,6 +1508,8 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     }
     if (!S.sort) S.sort = { k: 'date', d: -1 };
     var sk = S.sort.k, sd = S.sort.d;
+    var atkN = 0;
+    o.rows.forEach(function (r) { if (r.atk) atkN++; });
     var rows = o.rows.slice();
     rows.sort(function (a, b) {
       var x = a[sk], y = b[sk];
@@ -1468,7 +1527,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         + '<s>' + r.tags.join('·') + '</s></td>'
         + '<td class="n">' + r.last.toFixed(2) + '</td>'
         + '<td class="dt">' + d + '</td>'
-        + '<td class="n">' + r.p0.toFixed(2) + '</td>'
+        + '<td class="n"' + (r.atk ? ' title="9:25 竞价开盘价"' : '') + '>' + r.p0.toFixed(2) + '</td>'
         + pcell(r.chg) + pcell(r.r1) + pcell(r.r3) + pcell(r.r5) + pcell(r.r10)
         + '</tr>';
     }).join('');
@@ -1481,13 +1540,14 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     }).join('');
 
     $('list').innerHTML = head
-      + '<div class="smeta">共 <b>' + o.rows.length + '</b> 条记录 ｜ 涉及 <b>' + o.n + '</b> 只个股</div>'
+      + '<div class="smeta">共 <b>' + o.rows.length + '</b> 条记录 ｜ 涉及 <b>' + o.n + '</b> 只个股'
+      + (atkN ? ' ｜ 攻防 <b>' + atkN + '</b> 条按开盘价' : '') + '</div>'
       + '<div class="sorts">当前按 <b>' + (SCOL.filter(function (c) { return c.k === sk; })[0] || { t: sk }).t
       + ' ' + (sd < 0 ? '降序' : '升序') + '</b>　·　点表头排序　·　点名称看行情</div>'
       + '<div class="tw"><table><colgroup>' + cols + '</colgroup>'
       + '<thead><tr>' + ths + '</tr></thead><tbody>' + body + '</tbody></table></div>'
-      + '<div class="note">入选价＝入选日收盘价，最新价＝最新一根 K 线收盘，近 N 日＝相对 N 个交易日前；'
-      + '同一只股票不同日期入选分行列出，日线不复权。</div>';
+      + '<div class="note">入选价＝入选日收盘价，<b>攻防按当日 9:25 竞价开盘价</b>，入选涨幅随之按该价格算；'
+      + '最新价＝最新一根 K 线收盘，近 N 日＝相对 N 个交易日前；同一只股票不同日期入选分行列出，日线不复权。</div>';
 
     $('meta').innerHTML = '入选汇总 ｜ 近 ' + SUMDAYS + ' 个交易日 ｜ 截止 <b>' + o.date + '</b>';
     $('histBox').style.display = 'none';
@@ -1551,7 +1611,10 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     var m = (await TDXData.getMeta()) || {};
     var n = S.K ? S.K.size : 0;
     if (!n) { S.K = await TDXData.loadAllKlines(); n = S.K.size; }
-    $('ptxt').innerHTML = '本地股票 <b>' + n + '</b> 只<br>数据截止 <b>' + (m.lastDate || '—') + '</b>'
+    var hasToday = false;
+    if (S.K) S.K.forEach(function (k) { if (k.bd === TDXData.todayStr()) hasToday = true; });
+    $('ptxt').innerHTML = '本地股票 <b>' + n + '</b> 只<br>数据截止 <b>' + (m.lastDate || (n ? '今日已清空，请刷新' : '—')) + '</b>'
+      + '<br>今日K线 <b>' + (hasToday ? '已写入（盘中为过程数据）' : '无') + '</b>'
       + '<br>上次同步 ' + (m.updatedAt ? new Date(m.updatedAt).toLocaleString('zh-CN') : '—');
   }
 
@@ -1566,11 +1629,18 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       var r = await TDXData.downloadAll(snap.map(function (s) { return s.code; }), have, function (d, t, f) {
         stage('同步日线 ' + d + '/' + t + (f ? '（失败 ' + f + '）' : ''), 25 + 70 * d / t);
       });
-      var latest = await TDXData.fetchLatestDate();
-      S.meta = { lastDate: latest, updatedAt: Date.now() };
-      await TDXData.putMeta(S.meta);
       S.K = await TDXData.loadAllKlines();
-      stage('同步完成，新增 ' + r.ok + ' 只，失败 ' + r.failed + ' 只', 100);
+      var m0 = (await TDXData.getMeta()) || {};
+      var latest = await TDXData.fetchLatestDate();
+      stage('写入今日日线', 96);
+      var rr = await TDXData.applyTodayBars(snap, S.K, m0.lastDate || latest);
+      var bd = '', it = S.K.size ? S.K.values().next() : null;
+      if (it && it.value && it.value.bd) bd = it.value.bd;
+      m0.lastDate = (bd && bd > latest) ? bd : latest;
+      m0.updatedAt = Date.now();
+      S.meta = m0;
+      await TDXData.putMeta(m0);
+      stage('同步完成：新增 ' + r.ok + ' 只 ｜ 今日K线 覆盖 ' + rr.updated + ' / 追加 ' + rr.added, 100);
       updateMeta();
       refreshPanel();
     } catch (e) {
@@ -1584,6 +1654,23 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     S.K = null; S.meta = null;
     stage('本地数据已清空', 0);
     updateMeta(); refreshPanel();
+  }
+
+  async function clearToday() {
+    if (S.busy) return;
+    if (!confirm('清空缓存里的「今日」K线？\n用于剔除盘中过程数据。清空后请重新点「刷新选股」。')) return;
+    busy(true);
+    try {
+      var K = await ensureK();
+      var n = await TDXData.clearTodayBars(K);
+      var m = (await TDXData.getMeta()) || {};
+      if (m.lastDate === TDXData.todayStr()) { m.lastDate = ''; m.updatedAt = Date.now(); await TDXData.putMeta(m); }
+      S.meta = m;
+      stage(n ? '已清除 ' + n + ' 只的今日K线，请重新「刷新选股」' : '缓存中没有今日K线', n ? 55 : 0);
+      updateMeta(); refreshPanel();
+    } catch (e) {
+      stage('清空今日失败：' + e.message, 100, 'err');
+    } finally { busy(false); }
   }
 
   function fmtTs() {
@@ -1648,6 +1735,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       if (S.view === 'sum') fitSum(true);
     });
     $('sync').onclick = syncDaily;
+    $('ct').onclick = clearToday;
     $('wipe').onclick = wipe;
     Array.prototype.forEach.call(document.querySelectorAll('#qsrc button'), function (b) {
       b.onclick = function () { setSrc(b.getAttribute('data-s')); };
