@@ -1237,6 +1237,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
   async function runPicker() {
     if (S.busy) return;
     busy(true);
+    S.view = 'pick';
     try {
       var latest = await TDXData.fetchLatestDate().catch(function () { return TDXData.todayStr(); });
       S.meta = (await TDXData.getMeta()) || {};
@@ -1333,6 +1334,17 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     return rows;
   }
 
+  /* 盘中点「刷新选股」会把今日未收盘的K线写进缓存。回测把它当成持有期末价，
+     最近几笔就会被半天数据带偏，所以盘中最后一根直接剔除，只用已收盘的K线。 */
+  function partialLastBar(K) {
+    var t = TDXData.todayStr(), hit = 0, cnt = 0;
+    K.forEach(function (k) { if (cnt++ < 400 && k.bd === t) hit++; });
+    if (!hit) return false;                       // 最后一根不是今天 → 那天已经收盘
+    var d = new Date(), wd = d.getDay();
+    if (wd === 0 || wd === 6) return false;       // 周末看到的只能是补写的历史数据
+    return d.getHours() * 60 + d.getMinutes() < 15 * 60 + 5;
+  }
+
   /* ---------- 回测 ---------- */
   async function runBacktest() {
     if (S.busy) return;
@@ -1343,24 +1355,34 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       if (K.size < 500) throw new Error('本地日线数据不足（' + K.size + ' 只，可能被浏览器清理），先点「刷新选股」重新下载');
       S.meta = (await TDXData.getMeta()) || {};
       var stk = S.meta.stocks || {};
-      var DAYS = 60;
+      if (!Object.keys(stk).length) throw new Error('缺少股票名称与市值，请先点一次「刷新选股」');
+
+      var DAYS = 60, ATK = '攻防';
       var pool = {}, bench = { 1: [], 3: [], 5: [] }, sig = {};
       STRATS.forEach(function (s) { pool[s] = { 1: [], 3: [], 5: [] }; sig[s] = 0; });
+      /* 成交价口径（与「入选汇总」页的入选价一致）：
+         攻防是 9:25 竞价信号，开盘就能成交 → 信号日开盘价；
+         其余策略尾盘才出信号 → 信号日收盘价。
+         旧版统一用「次日开盘价」，与汇总页价格对不上，且对攻防多等了一天。 */
+      var partial = partialLastBar(K);   // 盘中最后一根还没收盘，不能当持有期末价
       var codes = Array.from(K.keys());
       var CH = 200;
       for (var i = 0; i < codes.length; i += CH) {
         var end = Math.min(i + CH, codes.length);
         for (var j = i; j < end; j++) {
-          var code = codes[j], k = K.get(code);
-          if (!k || k.n < 135) continue;
+          var code = codes[j], k = K.get(code), info = stk[code];
+          if (!k || !info || k.n < 135) continue;
           var o = p64(k.o), h = p64(k.h), l = p64(k.l), c = p64(k.c), v = f64(k.v);
-          var n = k.n, from = Math.max(0, n - DAYS), to = n - 6;
-          var info = stk[code] || ['X', 500000, 10];
-          var nmcv = info[1] || 500000;
-          var r = TDXEngine.evaluate(o, h, l, c, v, code, info[0], info[2] || 10, nmcv / c[n - 1], nmcv);
-          // 基准
+          var last = partial ? k.n - 2 : k.n - 1;      // 最后一个已收盘K线的下标
+          var from = Math.max(0, last - DAYS + 1), to = last - 5;
+          // 与「刷新选股」同口径传参：pe 缺失按 0 处理（亏损股不参与燕双飞/夜），
+          // 不能用假 PE=10 兜底，否则回测会把选股页根本不会选的股票算进来
+          var nmcv = info[1] || 0;
+          var r = TDXEngine.evaluate(o, h, l, c, v, code, info[0], info[2] || 0,
+            nmcv ? nmcv / c[k.n - 1] : 0, nmcv);
+          // 基准：全市场等权，同样按收盘价买入，和「尾盘」口径对齐
           for (var b = from; b <= to; b++) {
-            var buy0 = o[b + 1];
+            var buy0 = c[b];
             if (!(buy0 > 0)) continue;
             [1, 3, 5].forEach(function (d) {
               var px = c[b + d];
@@ -1368,15 +1390,16 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
             });
           }
           for (var s = 0; s < STRATS.length; s++) {
-            var arr = r[STRATS[s]];
+            var nm = STRATS[s], atk = (nm === ATK), arr = r[nm];
             for (var b2 = from; b2 <= to; b2++) {
               if (!arr[b2]) continue;
-              var buy = o[b2 + 1];
+              var buy = atk ? o[b2] : c[b2];
               if (!(buy > 0)) continue;
-              sig[STRATS[s]]++;
+              if (h[b2] === l[b2]) continue;          // 一字板/停牌：当天没有可成交的价格
+              sig[nm]++;
               [1, 3, 5].forEach(function (d) {
                 var px = c[b2 + d];
-                if (px > 0) pool[STRATS[s]][d].push(px / buy - 1);
+                if (px > 0) pool[nm][d].push(px / buy - 1);
               });
             }
           }
@@ -1391,7 +1414,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         for (var i = 0; i < a.length; i++) { s += a[i]; if (a[i] > 0) w++; if (a[i] > mx) mx = a[i]; if (a[i] < mn) mn = a[i]; }
         return { n: a.length, win: w / a.length * 100, avg: s / a.length * 100, best: mx * 100, worst: mn * 100 };
       }
-      var out = { rows: [], bench: {}, days: DAYS, ts: fmtTs() };
+      var out = { rows: [], bench: {}, days: DAYS, ts: fmtTs(), partial: partial };
       [1, 3, 5].forEach(function (d) { out.bench[d] = st(bench[d]); });
       var all = { 1: [], 3: [], 5: [] };
       STRATS.forEach(function (s) {
@@ -1451,7 +1474,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
           if (!k || !info || k.n < 140) continue;
           var o = p64(k.o), h = p64(k.h), l = p64(k.l), c = p64(k.c), v = f64(k.v);
           var lastN = c[k.n - 1];
-          var r = TDXEngine.evaluate(o, h, l, c, v, code, info[0], info[2] || 10,
+          var r = TDXEngine.evaluate(o, h, l, c, v, code, info[0], info[2] || 0,
             (info[1] || 0) / lastN, info[1] || 0);
           for (var off = 0; off < SUMDAYS; off++) {
             var idx = k.n - 1 - off;
@@ -1653,10 +1676,14 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
   function pct(x, d) { if (x === null) return '—'; return (x > 0 ? '+' : '') + x.toFixed(d || 2) + '%'; }
 
   function renderBT(o) {
+    var m0 = S.meta || {};
     var h = '<div class="btop"><button class="back" id="back">‹ 返回选股</button>'
-      + '<div class="btt">近 ' + o.days + ' 个交易日 ｜ 次日开盘买入</div></div>';
+      + '<div class="btt">近 ' + o.days + ' 个交易日 ｜ 信号日买入</div></div>';
+    h += '<div class="bench">成交价　攻防 <b>信号日 9:25 开盘价</b>　其余 <b>信号日收盘价</b>'
+      + (m0.lastDate ? '<br>数据截止 <b>' + m0.lastDate + '</b>' : '')
+      + (o.partial ? '　（今日未收盘，已剔除）' : '') + '　·　与「汇总」页入选价同口径</div>';
     if (o.bench[5]) {
-      h += '<div class="bench">全市场基准（等权）　1日 <b class="' + cls(o.bench[1].avg) + '">' + pct(o.bench[1].avg) + '</b>'
+      h += '<div class="bench">全市场基准（等权，收盘价买入）　1日 <b class="' + cls(o.bench[1].avg) + '">' + pct(o.bench[1].avg) + '</b>'
         + '　5日 <b class="' + cls(o.bench[5].avg) + '">' + pct(o.bench[5].avg) + '</b></div>';
     }
     if (o.overall.d5) {
@@ -1664,22 +1691,26 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         + '　5日均值 <b class="' + cls(o.overall.d5.avg) + '">' + pct(o.overall.d5.avg) + '</b></div>';
     }
     o.rows.forEach(function (r) {
+      var way = r.name === '攻防' ? '9:25 开盘价买入' : '收盘价买入';
       if (!r.d1) {
-        h += '<section><h2>' + r.name + '<em>0 笔</em></h2><div class="kbox dim">样本不足</div></section>';
+        h += '<section><h2>' + r.name + '<em>0 笔</em><small>' + way + '</small></h2><div class="kbox dim">样本不足</div></section>';
         return;
       }
-      h += '<section><h2>' + r.name + '<em>' + r.sig + ' 笔</em></h2><div class="kbox">'
+      h += '<section><h2>' + r.name + '<em>' + r.sig + ' 笔</em><small>' + way + '</small></h2><div class="kbox">'
         + kpi('1日胜率', r.d1.win.toFixed(0) + '%', '')
         + kpi('1日均值', pct(r.d1.avg), cls(r.d1.avg))
+        + (r.d3 ? kpi('3日胜率', r.d3.win.toFixed(0) + '%', '') + kpi('3日均值', pct(r.d3.avg), cls(r.d3.avg)) : '')
         + kpi('5日胜率', r.d5.win.toFixed(0) + '%', '')
         + kpi('5日均值', pct(r.d5.avg), cls(r.d5.avg))
-        + kpi('最好一笔', pct(r.d5.best, 1), 'up')
-        + kpi('最差一笔', pct(r.d5.worst, 1), 'down')
+        + kpi('5日最好', pct(r.d5.best, 1), 'up')
+        + kpi('5日最差', pct(r.d5.worst, 1), 'down')
         + '</div></section>';
     });
-    h += '<div class="note">口径：信号日次日开盘买入，持有至第 N 个交易日收盘。不含手续费与滑点，日线不复权，除权日会有跳空误差。样本少于一二十笔的策略，统计意义有限。</div>';
+    h += '<div class="note">口径：攻防按信号日 9:25 开盘价成交，其余策略按信号日收盘价成交（与「汇总」页入选价一致），'
+      + '持有至第 N 个交易日收盘。一字板/停牌当天无可成交价，已剔除；不含手续费与滑点，'
+      + '日线不复权，除权日会有跳空误差；盘中今日最后一根未收盘，不计入。样本少于一二十笔的策略，统计意义有限。</div>';
     $('list').innerHTML = h;
-    $('back').onclick = function () { S.view = 'pick'; renderRows(S.rows, null); };
+    $('back').onclick = backPick;
   }
 
   function kpi(label, val, c) {
@@ -1848,10 +1879,10 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
   document.addEventListener('DOMContentLoaded', function () {
     $('go').onclick = runPicker;
     $('sm').onclick = function () {
-      if (S.view === 'sum' && S.sum) { S.view = 'pick'; renderRows(S.rows, null); }
+      if (S.view === 'sum' && S.sum) { backPick(); }
       else runSummary();
     };
-    $('bt').onclick = function () { if (S.view === 'bt' && S.bt) { S.view = 'pick'; renderRows(S.rows, null); } else runBacktest(); };
+    $('bt').onclick = function () { if (S.view === 'bt' && S.bt) { backPick(); } else runBacktest(); };
     $('gear').onclick = togglePanel;
     var lastW = window.innerWidth;
     window.addEventListener('resize', function () {
