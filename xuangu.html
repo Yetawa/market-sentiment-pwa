@@ -27,7 +27,7 @@ h1 span{font-size:11px;color:var(--dim);font-weight:400;margin-left:7px}
 #gear{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid var(--line);
 color:var(--dim);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-top:2px}
 
-.bar{margin:2px 0 16px}
+.bar{margin:2px 0 12px}
 .pb{height:3px;background:#E8E2D6;border-radius:2px;overflow:hidden}
 .pb i{display:block;height:100%;width:0;background:var(--teal);transition:width .4s ease}
 .msg{font-size:12px;color:var(--dim);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -71,7 +71,7 @@ border-radius:14px;padding:4px 11px;white-space:nowrap;cursor:pointer}
 .chip.on u{color:rgba(255,255,255,.7)}
 
 /* 回测 */
-.btop{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.btop{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .back{background:#fff;border:1px solid var(--line);color:var(--ink);font-size:12.5px;
 padding:6px 12px;border-radius:8px;font-weight:500}
 .btt{font-size:12px;color:var(--dim)}
@@ -86,7 +86,7 @@ display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
 .k:nth-child(2n){border-right:none}
 .k span{display:block;font-size:11.5px;color:var(--dim)}
 .k b{display:block;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
-.note{font-size:11.5px;color:#A8A092;line-height:1.9;margin:6px 0 10px}
+.note{font-size:11.5px;color:#A8A092;line-height:1.9;margin:3px 0 6px}
 .note>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:4px;
 color:#A8A092;font-size:11.5px;padding:3px 0;-webkit-tap-highlight-color:transparent}
 .note>summary::-webkit-details-marker{display:none}
@@ -95,9 +95,9 @@ color:#A8A092;font-size:11.5px;padding:3px 0;-webkit-tap-highlight-color:transpa
 .note[open]>summary{margin-bottom:2px}
 
 /* 入选汇总 */
-.smeta{font-size:12.5px;color:var(--dim);margin:-2px 0 4px}
+.smeta{font-size:12.5px;color:var(--dim);margin:-2px 0 3px}
 .smeta b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
-.sorts{font-size:11.5px;color:#A8A092;margin-bottom:9px}
+.sorts{font-size:11.5px;color:#A8A092;margin-bottom:5px}
 .sorts b{color:var(--teal);font-weight:600}
 .tw{overflow:auto;overscroll-behavior-x:contain;background:#fff;border-radius:9px;
 box-shadow:0 1px 3px rgba(44,62,80,.07);margin-bottom:12px}
@@ -1759,8 +1759,10 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
   }
 
   /* 让表格占满剩余视口高度：表头 sticky 才有意义，纵向滚动发生在表格内部。
-     下限固定为「表头 + 5 行」——行高按实际渲染量出来，不同机型/字号都准，
-     以前写死 240px，小屏上只露 3 行半，等于白留了半屏空白。 */
+     下限固定为「表头 + 6 行」——行高按实际渲染量出来，不同机型/字号都准，
+     以前写死 240px，小屏上只露 3 行半，等于白留了半屏空白。
+     ROWS_MIN 是表格最少露出的行数，调行数只改这一个常量。 */
+  var ROWS_MIN = 6;
   function fitSum(align) {
     var wrap = $('list') && $('list').querySelector('.tw');
     if (!wrap) return;
@@ -1779,14 +1781,14 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     var headH = (headEl && headEl.offsetHeight) || 34;
     var rowH = (rowEl && rowEl.offsetHeight) || 46;
     // 表格能横向滚动，非 overlay 滚动条会吃掉十几像素高度（手机 Safari/Chrome 多为 0），
-    // 不计进去的话「表头 + 5 行」刚好差一点点，第 5 行只露半截
+    // 不计进去的话「表头 + 6 行」刚好差一点点，第 6 行只露半截
     var sbH = Math.max(0, wrap.offsetHeight - wrap.clientHeight);
-    var floor = Math.round(headH + rowH * 5 + sbH + 2);   // 至少 5 只股票
+    var floor = Math.round(headH + rowH * ROWS_MIN + sbH + 2);   // 至少 ROWS_MIN 只股票
     var avail = window.innerHeight - Math.min(Math.max(top, 8), window.innerHeight - 260) - dh - 12;
     var h = Math.max(floor, Math.round(avail));
     wrap.style.maxHeight = h + 'px';
     // 二次校正：尽量让整页不再纵向可滚，否则滑动页面会把表头带出屏幕；
-    // 但再挤也不能低于 5 行，宁可让页面多滚一点
+    // 但再挤也不能低于 ROWS_MIN 行，宁可让页面多滚一点
     for (var i = 0; i < 2; i++) {
       var over = document.scrollingElement.scrollHeight - window.innerHeight;
       if (over <= 0) break;
