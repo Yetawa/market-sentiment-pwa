@@ -32,6 +32,7 @@ color:var(--dim);font-size:15px;display:flex;align-items:center;justify-content:
 .pb i{display:block;height:100%;width:0;background:var(--teal);transition:width .4s ease}
 .msg{font-size:12px;color:var(--dim);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msg.err{color:var(--red);white-space:normal}
+.hintw{font-style:normal;color:var(--red);font-weight:600}
 
 section{margin-bottom:20px}
 h2{font-size:15px;color:var(--ink);font-weight:600;border-left:3px solid var(--teal);
@@ -809,6 +810,20 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
   }
 
+  /* ---------- 日期序列（随日线一起存本地） ----------
+     每根K线存一个 Int16（2020-01-01 起的天数），210 根约 420 字节。
+     「入选汇总」要在本地把「倒数第几根K线」映射回真实交易日，
+     以前是逐只再拉一次日线接口，几百只就是几百次全量请求。 */
+  var DATE_BASE = Date.UTC(2020, 0, 1);
+  function dayNum(s) {
+    if (!s || s.length < 10) return 0;
+    return Math.round((Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) - DATE_BASE) / 86400000);
+  }
+  function dayStr(v) {
+    var d = new Date(DATE_BASE + v * 86400000), p = function (x) { return (x < 10 ? '0' : '') + x; };
+    return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
+  }
+
   /* 判断某根缓存K线是否就是快照这一天的数据（价格差 < 0.011 元、量差 < 0.2%） */
   function barIsSnapshot(k, i, s) {
     return Math.abs(k.o[i] / 1000 - s.open) < 0.011 && Math.abs(k.h[i] / 1000 - s.high) < 0.011 &&
@@ -830,6 +845,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       if (n >= 2 && barIsSnapshot(k, n - 1, s) && barIsSnapshot(k, n - 2, s)) {
         k.o = k.o.slice(0, n - 1); k.h = k.h.slice(0, n - 1); k.l = k.l.slice(0, n - 1);
         k.c = k.c.slice(0, n - 1); k.v = k.v.slice(0, n - 1);
+        if (k.dd && k.dd.length === n) k.dd = k.dd.slice(0, n - 1);
         n = n - 1; k.n = n; fixed++;
       }
       if (k.cl) same = false;                        // 今日已被清空：必须重新追加
@@ -841,6 +857,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         k.l[n - 1] = Math.round(s.low * 1000);
         k.c[n - 1] = Math.round(s.close * 1000);
         k.v[n - 1] = Math.round(s.vol);
+        if (k.dd && k.dd.length >= n && s.barDate) k.dd[n - 1] = dayNum(s.barDate);
         k.bd = s.barDate;
         updated++;
       } else {
@@ -850,6 +867,12 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         o[n] = Math.round(s.open * 1000); h[n] = Math.round(s.high * 1000);
         l[n] = Math.round(s.low * 1000); c[n] = Math.round(s.close * 1000);
         v[n] = Math.round(s.vol);
+        if (k.dd && k.dd.length === n) {
+          var dd2 = new Int16Array(n + 1);
+          dd2.set(k.dd);
+          dd2[n] = dayNum(s.barDate);
+          k.dd = dd2;
+        }
         k.o = o; k.h = h; k.l = l; k.c = c; k.v = v; k.n = n + 1; k.bd = s.barDate;
         k.cl = 0;
         added++;
@@ -873,6 +896,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         if (cut < 1) return;
         k.o = k.o.slice(0, cut); k.h = k.h.slice(0, cut); k.l = k.l.slice(0, cut);
         k.c = k.c.slice(0, cut); k.v = k.v.slice(0, cut);
+        if (k.dd && k.dd.length === n0) k.dd = k.dd.slice(0, cut);
         k.n = cut; k.bd = ''; k.cl = 1;
         entries.push({ code: code, v: k });
         cnt++;
@@ -1016,7 +1040,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       var st = Math.max(0, arr.length - N_KEEP);
       var n = arr.length - st;
       var o = new Int32Array(n), h = new Int32Array(n), l = new Int32Array(n),
-        c = new Int32Array(n), v = new Int32Array(n);
+        c = new Int32Array(n), v = new Int32Array(n), dd = new Int16Array(n);
       for (var i = 0; i < n; i++) {
         var r0 = arr[st + i];
         o[i] = Math.round(+r0[1] * 1000);
@@ -1024,8 +1048,9 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         h[i] = Math.round(+r0[3] * 1000);
         l[i] = Math.round(+r0[4] * 1000);
         v[i] = Math.round(+r0[5]);
+        dd[i] = dayNum(r0[0]);
       }
-      return { n: n, o: o, h: h, l: l, c: c, v: v, bd: arr[arr.length - 1][0] };
+      return { n: n, o: o, h: h, l: l, c: c, v: v, dd: dd, bd: arr[arr.length - 1][0] };
     });
   }
 
@@ -1108,6 +1133,8 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     clearAll: clearAll,
     refetchKlines: refetchKlines,
     todayStr: todayStr,
+    dayNum: dayNum,
+    dayStr: dayStr,
     applyTodayBars: applyTodayBars,
     clearTodayBars: clearTodayBars,
     localUniverse: localUniverse,
@@ -1134,6 +1161,38 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function f64(a) { var o = new Float64Array(a.length); for (var i = 0; i < a.length; i++) o[i] = a[i]; return o; }
   function p64(a) { var o = new Float64Array(a.length); for (var i = 0; i < a.length; i++) o[i] = a[i] / 1000; return o; }
+
+  /* ---------- 公式计算结果缓存 ----------
+     选股/回测/汇总原来各跑一遍全市场 evaluate（4600 只 × 210 根 × 6 策略），
+     同一份数据算三遍。这里按「代码 + 最后一根K线 + 基本面参数」做指纹，
+     命中就直接复用；只保留最近 EW 根K线的信号（回测最多回溯 60 根，留够余量）。 */
+  var ECACHE = new Map();
+  var EW = 80;
+
+  function kfp(k, info) {
+    var n = k.n;
+    return n + '|' + (k.bd || '') + '|' + k.o[n - 1] + '|' + k.h[n - 1] + '|' + k.l[n - 1] + '|'
+      + k.c[n - 1] + '|' + k.v[n - 1] + '|' + info[0] + '|' + (info[2] || 0) + '|' + (info[1] || 0);
+  }
+
+  /* 三个视图统一用「最后一根缓存K线收盘价」换算流通股本，口径一致才能共享缓存 */
+  function getSignals(code, k, info) {
+    var fp = kfp(k, info);
+    var hit = ECACHE.get(code);
+    if (hit && hit.fp === fp) return hit;
+    var nmcv = info[1] || 0, lastC = k.c[k.n - 1] / 1000;
+    var o = p64(k.o), h = p64(k.h), l = p64(k.l), c = p64(k.c), v = f64(k.v);
+    var r = TDXEngine.evaluate(o, h, l, c, v, code, info[0], info[2] || 0,
+      nmcv && lastC > 0 ? nmcv / lastC : 0, nmcv);
+    var w = Math.min(EW, k.n), off0 = k.n - w, sigs = {};
+    STRATS.forEach(function (s) {
+      var src = r[s];
+      sigs[s] = src.length === w ? src : src.slice(off0);
+    });
+    var rec = { fp: fp, sigs: sigs, w: w, n: k.n, base: w - k.n };
+    ECACHE.set(code, rec);
+    return rec;
+  }
 
   /* ---------- 个股行情外链 ---------- */
   function quoteUrl(code) {
@@ -1244,8 +1303,14 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       var K = await ensureK();
 
       stage('拉取全市场行情', 8);
-      var cached = K.size > 500 ? Array.from(K.keys()) : null;
-      var snap = await TDXData.fetchSnapshot(cached, function (d, t) { stage('行情 ' + d + '/' + t, 8 + 4 * d / t); });
+      // 内置代码池 + 增量池 + 已缓存代码（取并集）：
+      // 既让新上市的票能进池，也不会漏掉早先下载过、但不在池子里的代码
+      var uni = TDXData.localUniverse();
+      if (K.size) {
+        var seenC = new Set(uni);
+        K.forEach(function (v, c) { if (!seenC.has(c)) { seenC.add(c); uni.push(c); } });
+      }
+      var snap = await TDXData.fetchSnapshot(uni, function (d, t) { stage('行情 ' + d + '/' + t, 8 + 4 * d / t); });
       if (snap.length < 500) {
         throw new Error('只取到 ' + snap.length + ' 只行情：快照接口 qt.gtimg.cn 没连上。'
           + '请换网络（数据切 Wi-Fi 或反过来）后重试，本地日线不会因此丢失');
@@ -1263,6 +1328,17 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         // 盘中首次下载时，日线接口还没有今天这一根，用当日快照补上
         await TDXData.applyTodayBars(snap, K);
       } else {
+        // 局部补池：快照里有、本地却没有日线的（新上市），当场把日线拉下来，
+        // 否则它们永远进不了选股池（以前只有点「同步日线」才会补）
+        var lack = [];
+        snap.forEach(function (s) { if (!K.has(s.code)) lack.push(s.code); });
+        if (lack.length) {
+          stage('补下载新股票日线 ' + lack.length + ' 只', 12);
+          await TDXData.downloadAll(lack, new Set(), function (d, t) {
+            stage('补下载日线 ' + d + '/' + t, 12 + 70 * d / t);
+          });
+          K = S.K = await TDXData.loadAllKlines();
+        }
         // 已有缓存：把当日行情写入缓存（盘中=过程数据，收盘后=最终数据），
         // 已有今日那根则覆盖为最新，缺失则追加；不再因「落后 N 天」而放弃更新。
         stage('更新今日日线', 84);
@@ -1275,20 +1351,23 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
 
       var stk = {};
       snap.forEach(function (s) { stk[s.code] = [s.name, s.nmc, s.pe]; });
-      var ts = todayStat(K);
-      S.meta = { lastDate: ts.hit ? ts.today : (ts.any || latest), updatedAt: Date.now(), stocks: stk, count: snap.length };
+      var tstat = todayStat(K);
+      S.meta = { lastDate: tstat.hit ? tstat.today : (tstat.any || latest), updatedAt: Date.now(), stocks: stk, count: snap.length };
       await TDXData.putMeta(S.meta);
 
       stage('计算六大策略', 86);
-      var rows = await compute(K, snap, latest);
-      var ts = fmtTs();
+      var res = await compute(K, snap);
+      var rows = res.rows, ts = fmtTs();
       S.rows = rows;
-      renderRows(rows, '数据 <b>' + latest + '</b> ｜ 命中 <b>' + rows.length + '</b> 只 ｜ ' + ts);
+      renderRows(rows, '数据 <b>' + latest + '</b> ｜ 命中 <b>' + rows.length + '</b> 只 ｜ ' + ts
+        + (res.miss ? ' ｜ <i class="hintw">' + res.miss + ' 只无行情</i>' : ''));
       saveHist(latest, rows, ts);
       renderChips();
       updateMeta();
       refreshPanel();
-      stage('完成，命中 ' + rows.length + ' 只', 100);
+      stage(res.miss
+        ? '完成，命中 ' + rows.length + ' 只；另有 ' + res.miss + ' 只没取到行情（停牌或限流），未参与计算，点「同步日线」可补齐'
+        : '完成，命中 ' + rows.length + ' 只', 100, res.miss ? 'err' : '');
       $('cp').disabled = !rows.length;
 
       // 后台增量补池（吸收新上市的票），失败静默，不影响本次结果
@@ -1303,7 +1382,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     }
   }
 
-  async function compute(K, snap, date) {
+  async function compute(K, snap) {
     var mm = new Map();
     snap.forEach(function (s) { mm.set(s.code, s); });
     var codes = [];
@@ -1315,10 +1394,9 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       for (var j = i; j < end; j++) {
         var code = codes[j], k = K.get(code), m = mm.get(code);
         if (!k || k.n < 130) continue;
-        var o = p64(k.o), h = p64(k.h), l = p64(k.l), c = p64(k.c), v = f64(k.v);
-        var r = TDXEngine.evaluate(o, h, l, c, v, code, m.name, m.pe, m.nmc / m.close, m.nmc);
+        var rec = getSignals(code, k, [m.name, m.nmc, m.pe]);
         var tags = [];
-        for (var s = 0; s < STRATS.length; s++) if (r[STRATS[s]][k.n - 1]) tags.push(STRATS[s]);
+        for (var s = 0; s < STRATS.length; s++) if (rec.sigs[STRATS[s]][rec.w - 1]) tags.push(STRATS[s]);
         if (tags.length) {
           rows.push({
             code: code, name: m.name, price: m.close,
@@ -1331,7 +1409,8 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       await sleep(0);
     }
     rows.sort(function (a, b) { return STRATS.indexOf(a.tags[0]) - STRATS.indexOf(b.tags[0]); });
-    return rows;
+    // K 里有、快照没给行情的股票（分片被限流）根本没参与计算，要如实告诉用户
+    return { rows: rows, miss: Math.max(0, K.size - codes.length) };
   }
 
   /* 盘中点「刷新选股」会把今日未收盘的K线写进缓存。回测把它当成持有期末价，
@@ -1372,14 +1451,12 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         for (var j = i; j < end; j++) {
           var code = codes[j], k = K.get(code), info = stk[code];
           if (!k || !info || k.n < 135) continue;
-          var o = p64(k.o), h = p64(k.h), l = p64(k.l), c = p64(k.c), v = f64(k.v);
-          var last = partial ? k.n - 2 : k.n - 1;      // 最后一个已收盘K线的下标
-          var from = Math.max(0, last - DAYS + 1), to = last - 5;
+          var o = p64(k.o), h = p64(k.h), l = p64(k.l), c = p64(k.c);
           // 与「刷新选股」同口径传参：pe 缺失按 0 处理（亏损股不参与燕双飞/夜），
           // 不能用假 PE=10 兜底，否则回测会把选股页根本不会选的股票算进来
-          var nmcv = info[1] || 0;
-          var r = TDXEngine.evaluate(o, h, l, c, v, code, info[0], info[2] || 0,
-            nmcv ? nmcv / c[k.n - 1] : 0, nmcv);
+          var rec = getSignals(code, k, info), sgBase = rec.base;
+          var last = partial ? k.n - 2 : k.n - 1;      // 最后一个已收盘K线的下标
+          var from = Math.max(0, last - DAYS + 1), to = last - 5;
           // 基准：全市场等权，同样按收盘价买入，和「尾盘」口径对齐
           for (var b = from; b <= to; b++) {
             var buy0 = c[b];
@@ -1390,9 +1467,9 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
             });
           }
           for (var s = 0; s < STRATS.length; s++) {
-            var nm = STRATS[s], atk = (nm === ATK), arr = r[nm];
+            var nm = STRATS[s], atk = (nm === ATK), arr = rec.sigs[nm];
             for (var b2 = from; b2 <= to; b2++) {
-              if (!arr[b2]) continue;
+              if (!arr[b2 + sgBase]) continue;
               var buy = atk ? o[b2] : c[b2];
               if (!(buy > 0)) continue;
               if (h[b2] === l[b2]) continue;          // 一字板/停牌：当天没有可成交的价格
@@ -1472,15 +1549,14 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         for (var j = i; j < end; j++) {
           var code = codes[j], k = K.get(code), info = stk[code];
           if (!k || !info || k.n < 140) continue;
-          var o = p64(k.o), h = p64(k.h), l = p64(k.l), c = p64(k.c), v = f64(k.v);
+          var o = p64(k.o), c = p64(k.c);
           var lastN = c[k.n - 1];
-          var r = TDXEngine.evaluate(o, h, l, c, v, code, info[0], info[2] || 0,
-            (info[1] || 0) / lastN, info[1] || 0);
+          var rec = getSignals(code, k, info), sgBase = rec.base;
           for (var off = 0; off < SUMDAYS; off++) {
             var idx = k.n - 1 - off;
             if (idx < 130 || idx < 1) continue;
             var tags = [];
-            for (var s = 0; s < STRATS.length; s++) if (r[STRATS[s]][idx]) tags.push(STRATS[s]);
+            for (var s = 0; s < STRATS.length; s++) if (rec.sigs[STRATS[s]][idx + sgBase]) tags.push(STRATS[s]);
             if (!tags.length) continue;
             // 攻防是 9:25 竞价策略，入选价取当日开盘价；其余策略为尾盘，取收盘价
             var atk = tags.indexOf('攻防') >= 0;
@@ -1507,54 +1583,71 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         return;
       }
 
-      // 给涉及到的股票逐个取日期序列，把"倒数第几根"映射成真实交易日
-      var uniq = [], seen = {};
-      picks.forEach(function (p) { if (!seen[p.code]) { seen[p.code] = 1; uniq.push(p.code); } });
-      var dmap = {}, done = 0, qi = 0;
-      stage('对齐交易日 ' + uniq.length + ' 只', 72);
-      async function worker() {
-        while (qi < uniq.length) {
-          var cc = uniq[qi++];
-          try { dmap[cc] = await TDXData.fetchDates(cc); } catch (e) { dmap[cc] = null; }
-          done++;
-          if (done % 4 === 0 || done === uniq.length) {
-            stage('对齐交易日 ' + done + '/' + uniq.length, 72 + 25 * done / uniq.length);
-            await sleep(0);
-          }
-        }
-      }
-      var ws = [];
-      for (var w = 0; w < 6; w++) ws.push(worker());
-      await Promise.all(ws);
-
-      function alignDelta(arr, cLast, cPrev) {
-        // 接口可能比本地缓存多出今天这一根，用最后两根收盘价倒推错位量
-        for (var back = 0; back < 6 && back < arr.length; back++) {
-          var ix = arr.length - 1 - back;
-          if (Math.abs(arr[ix][1] - cLast) <= 0.0015) {
-            if (ix >= 1 && cPrev !== null) {
-              if (Math.abs(arr[ix - 1][1] - cPrev) <= 0.0015) return back;
-              continue;
-            }
-            return back;
-          }
-        }
-        return 0;
-      }
+      // 日期对齐：日线缓存里已带日期序列（dd），本地直接映射成真实交易日，
+      // 不再逐只重拉日线接口（以前几百只入选股 = 几百次全量请求）。
+      // 早期版本存下的缓存没有 dd，才回退到网络对齐。
+      var needNet = [], netSeen = {};
       picks.forEach(function (p) {
-        var arr = dmap[p.code];
-        if (!arr || !arr.length) return;
-        var delta = alignDelta(arr, p.cLast, p.cPrev);
-        var ix = arr.length - 1 - delta - p.off;
-        if (ix >= 0) p.date = arr[ix][0];
+        var k = K.get(p.code);
+        if (k && k.dd && k.dd.length === k.n) {
+          var ix = k.n - 1 - p.off;
+          if (ix >= 0 && ix < k.dd.length) p.date = TDXData.dayStr(k.dd[ix]);
+        } else if (!netSeen[p.code]) {
+          netSeen[p.code] = 1;
+          needNet.push(p.code);
+        }
       });
+
+      if (needNet.length) {
+        var dmap = {}, done = 0, qi = 0;
+        stage('对齐交易日 ' + needNet.length + ' 只（旧缓存）', 72);
+        async function worker() {
+          while (qi < needNet.length) {
+            var cc = needNet[qi++];
+            try { dmap[cc] = await TDXData.fetchDates(cc); } catch (e) { dmap[cc] = null; }
+            done++;
+            if (done % 4 === 0 || done === needNet.length) {
+              stage('对齐交易日 ' + done + '/' + needNet.length, 72 + 25 * done / needNet.length);
+              await sleep(0);
+            }
+          }
+        }
+        var ws = [];
+        for (var w = 0; w < 6; w++) ws.push(worker());
+        await Promise.all(ws);
+
+        function alignDelta(arr, cLast, cPrev) {
+          // 接口可能比本地缓存多出今天这一根，用最后两根收盘价倒推错位量
+          for (var back = 0; back < 6 && back < arr.length; back++) {
+            var ix = arr.length - 1 - back;
+            if (Math.abs(arr[ix][1] - cLast) <= 0.0015) {
+              if (ix >= 1 && cPrev !== null) {
+                if (Math.abs(arr[ix - 1][1] - cPrev) <= 0.0015) return back;
+                continue;
+              }
+              return back;
+            }
+          }
+          return 0;
+        }
+        picks.forEach(function (p) {
+          if (p.date) return;
+          var arr = dmap[p.code];
+          if (!arr || !arr.length) return;
+          var delta = alignDelta(arr, p.cLast, p.cPrev);
+          var ix = arr.length - 1 - delta - p.off;
+          if (ix >= 0) p.date = arr[ix][0];
+        });
+      }
 
       picks.sort(function (a, b) {
         if (a.date !== b.date) return a.date < b.date ? 1 : -1;
         return b.chg - a.chg;
       });
 
-      S.sum = { rows: picks, n: uniq.length, date: S.meta.lastDate || '—', ts: fmtTs() };
+      var uq = {}, uqn = 0;
+      picks.forEach(function (p) { if (!uq[p.code]) { uq[p.code] = 1; uqn++; } });
+      S.sum = { rows: picks, n: uqn, date: S.meta.lastDate || '—', ts: fmtTs() };
       if (!S.sort) S.sort = { k: 'date', d: -1 };
       renderSum(true);
       stage('汇总完成：' + picks.length + ' 条', 100);
@@ -1657,7 +1750,9 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       + '<div class="tw"><table><colgroup>' + cols + '</colgroup>'
       + '<thead><tr>' + ths + '</tr></thead><tbody>' + body + '</tbody></table></div>'
       + '<div class="note">入选价＝入选日收盘价，<b>攻防按当日 9:25 竞价开盘价</b>，入选涨幅随之按该价格算；'
-      + '最新价＝最新一根 K 线收盘，近 N 日＝相对 N 个交易日前；同一只股票不同日期入选分行列出，日线不复权。</div>';
+      + '最新价＝最新一根 K 线收盘，近 N 日＝相对 N 个交易日前；同一只股票不同日期入选分行列出，日线不复权。'
+      + '<br><b>注意</b>：历史信号里的 PE、流通市值过滤用的是当前值，存在前视偏差，'
+      + '历史入选只适合复盘信号形态，不宜直接当真实可成交记录。</div>';
 
     $('meta').innerHTML = '入选汇总 ｜ 近 ' + SUMDAYS + ' 个交易日 ｜ 截止 <b>' + o.date + '</b>';
     $('histBox').style.display = 'none';
@@ -1708,7 +1803,9 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     });
     h += '<div class="note">口径：攻防按信号日 9:25 开盘价成交，其余策略按信号日收盘价成交（与「汇总」页入选价一致），'
       + '持有至第 N 个交易日收盘。一字板/停牌当天无可成交价，已剔除；不含手续费与滑点，'
-      + '日线不复权，除权日会有跳空误差；盘中今日最后一根未收盘，不计入。样本少于一二十笔的策略，统计意义有限。</div>';
+      + '日线不复权，除权日会有跳空误差；盘中今日最后一根未收盘，不计入。样本少于一二十笔的策略，统计意义有限。'
+      + '<br><b>已知偏差</b>：燕双飞/夜用 PE、流通市值做过滤，回测用的是<b>当前</b>值去套历史信号（前视偏差）；'
+      + '股票池为当前在市股票，已退市股不在样本内（幸存者偏差）。真实收益通常低于此处数值。</div>';
     $('list').innerHTML = h;
     $('back').onclick = backPick;
   }
@@ -1804,6 +1901,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     if (!confirm('清空本地日线数据？\n\n下次点「刷新选股」需要重新下载全市场日线（3-5 分钟、约 40MB 流量）。\n股票代码池会保留，不需要重新拉列表。')) return;
     await TDXData.clearAll();
     S.K = null; S.meta = null;
+    ECACHE.clear();
     stage('本地日线已清空，股票代码池已保留。点「刷新选股」重新下载即可', 0);
     updateMeta(); refreshPanel();
   }
