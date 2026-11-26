@@ -831,35 +831,78 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       Math.abs(k.v[i] - s.vol) <= Math.max(1, s.vol * 0.002);
   }
 
+  /* 快照接口挂掉时的降级方案：用本地日线的最后一根拼出「伪快照」，
+     让选股/回测/汇总照常跑。名称、PE、流通市值沿用上次成功刷新时存下的
+     静态数据（S.meta.stocks），涨跌幅由最后两根收盘价算出。
+     缺的只是「今天」这一天的实时价，所以结果等于「用上一交易日收盘重算」。 */
+  function localSnap(K, stk) {
+    var out = [];
+    K.forEach(function (k, code) {
+      if (!k || k.n < 2) return;
+      var close = k.c[k.n - 1] / 1000, prev = k.c[k.n - 2] / 1000;
+      if (!(close > 0) || !(prev > 0)) return;
+      var meta = stk && stk[code];
+      var bd = k.bd || (k.dd && k.dd.length === k.n && k.dd[k.n - 1] ? dayStr(k.dd[k.n - 1]) : '');
+      out.push({
+        code: code, name: (meta && meta[0]) || code,
+        open: k.o[k.n - 1] / 1000, high: k.h[k.n - 1] / 1000, low: k.l[k.n - 1] / 1000,
+        close: close, prev: prev, vol: k.v[k.n - 1],
+        turnover: 0, pe: (meta && meta[2]) || 0, nmc: (meta && meta[1]) || 0,
+        time: '', barDate: bd, local: 1
+      });
+    });
+    return out;
+  }
+
+  /* 本地缓存里最新的那根K线日期（快照拿不到时用它代替「最新交易日」） */
+  function localLatestDate(K) {
+    var m = '';
+    if (K) K.forEach(function (k) { if (k.bd && k.bd > m) m = k.bd; });
+    return m;
+  }
+
   /* 用当日快照写入「今日」K线：缓存里已有今日则覆盖为最新，没有则追加。
      盘中反复刷新即可持续更新，收盘后再次刷新会被收盘数据覆盖。
      判定同时看日期和数据本身：多标签页/旧版本并发写入可能把同一天写成两遍，
      重复的那根会让量能参照整体错位（选股结果随之错），所以先做去重修复。 */
   function applyTodayBars(snap, K) {
-    var entries = [], added = 0, updated = 0, fixed = 0;
+    var entries = [], added = 0, updated = 0, fixed = 0, noop = 0;
     snap.forEach(function (s) {
       var k = K.get(s.code);
       if (!k || !(s.close > 0) || !(s.vol > 0) || !s.barDate || k.n < 1) return;
-      var n = k.n, same;
+      var n = k.n, same, dirty = false;
       // 最后两根都与今日快照完全一致 → 同一天被写了两遍，删掉多出来的那根
       if (n >= 2 && barIsSnapshot(k, n - 1, s) && barIsSnapshot(k, n - 2, s)) {
         k.o = k.o.slice(0, n - 1); k.h = k.h.slice(0, n - 1); k.l = k.l.slice(0, n - 1);
         k.c = k.c.slice(0, n - 1); k.v = k.v.slice(0, n - 1);
         if (k.dd && k.dd.length === n) k.dd = k.dd.slice(0, n - 1);
-        n = n - 1; k.n = n; fixed++;
+        n = n - 1; k.n = n; fixed++; dirty = true;
       }
       if (k.cl) same = false;                        // 今日已被清空：必须重新追加
       else if (k.bd) same = (k.bd === s.barDate) || barIsSnapshot(k, n - 1, s);
       else same = barIsSnapshot(k, n - 1, s);        // 无日期：数据完全一致即同一根
       if (same) {
-        k.o[n - 1] = Math.round(s.open * 1000);
-        k.h[n - 1] = Math.round(s.high * 1000);
-        k.l[n - 1] = Math.round(s.low * 1000);
-        k.c[n - 1] = Math.round(s.close * 1000);
-        k.v[n - 1] = Math.round(s.vol);
-        if (k.dd && k.dd.length >= n && s.barDate) k.dd[n - 1] = dayNum(s.barDate);
-        k.bd = s.barDate;
-        updated++;
+        var o2 = Math.round(s.open * 1000), h2 = Math.round(s.high * 1000),
+          l2 = Math.round(s.low * 1000), c2 = Math.round(s.close * 1000), v2 = Math.round(s.vol),
+          d2 = s.barDate ? dayNum(s.barDate) : 0;
+        // 数值与日期都与缓存完全一致 → 这条记录没必要重写。
+        // 收盘后再刷新、或盘中连点两次「刷新选股」，全市场 4600 条几乎都不变，
+        // 以前一律 put 一遍，手机端的写放大全耗在这上面。
+        if (k.o[n - 1] !== o2 || k.h[n - 1] !== h2 || k.l[n - 1] !== l2 || k.c[n - 1] !== c2 ||
+          k.v[n - 1] !== v2 || k.bd !== s.barDate ||
+          (k.dd && k.dd.length >= n && d2 && k.dd[n - 1] !== d2)) dirty = true;
+        if (dirty) {
+          k.o[n - 1] = o2;
+          k.h[n - 1] = h2;
+          k.l[n - 1] = l2;
+          k.c[n - 1] = c2;
+          k.v[n - 1] = v2;
+          if (k.dd && k.dd.length >= n && s.barDate) k.dd[n - 1] = d2;
+          k.bd = s.barDate;
+          updated++;
+        } else {
+          noop++;
+        }
       } else {
         var o = new Int32Array(n + 1), h = new Int32Array(n + 1), l = new Int32Array(n + 1),
           c = new Int32Array(n + 1), v = new Int32Array(n + 1);
@@ -875,12 +918,14 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         }
         k.o = o; k.h = h; k.l = l; k.c = c; k.v = v; k.n = n + 1; k.bd = s.barDate;
         k.cl = 0;
-        added++;
+        added++; dirty = true;
       }
-      entries.push({ code: s.code, v: k });
+      if (dirty) entries.push({ code: s.code, v: k });
     });
-    if (!entries.length) return Promise.resolve({ added: 0, updated: 0, fixed: 0 });
-    return putKlines(entries).then(function () { return { added: added, updated: updated, fixed: fixed }; });
+    if (!entries.length) return Promise.resolve({ added: 0, updated: 0, fixed: 0, noop: noop });
+    return putKlines(entries).then(function () {
+      return { added: added, updated: updated, fixed: fixed, noop: noop };
+    });
   }
 
   /* 清掉缓存里的「今日」那根 K线（剔除盘中过程数据） */
@@ -1137,6 +1182,8 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     dayStr: dayStr,
     applyTodayBars: applyTodayBars,
     clearTodayBars: clearTodayBars,
+    localSnap: localSnap,
+    localLatestDate: localLatestDate,
     localUniverse: localUniverse,
     saveUniverse: saveUniverse
   };
@@ -1311,12 +1358,33 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         K.forEach(function (v, c) { if (!seenC.has(c)) { seenC.add(c); uni.push(c); } });
       }
       var snap = await TDXData.fetchSnapshot(uni, function (d, t) { stage('行情 ' + d + '/' + t, 8 + 4 * d / t); });
+      var degraded = false;
       if (snap.length < 500) {
-        throw new Error('只取到 ' + snap.length + ' 只行情：快照接口 qt.gtimg.cn 没连上。'
-          + '请换网络（数据切 Wi-Fi 或反过来）后重试，本地日线不会因此丢失');
+        // 快照接口挂了不等于不能算：本地已有全市场日线时，用最后两根收盘价拼出
+        // 「伪快照」，跳过今日更新直接重算（口径 = 本地最后一根K线收盘）。
+        // 名称/PE/流通市值沿用上次成功刷新时存下的静态数据。
+        var stkPrev = (S.meta && S.meta.stocks) || {};
+        var canLocal = K.size >= 500 && Object.keys(stkPrev).length > 500;
+        if (canLocal && confirm('只取到 ' + snap.length + ' 只行情：快照接口 qt.gtimg.cn 没连上。\n\n'
+          + '本地已有 ' + K.size + ' 只日线，可以直接用缓存重算（不更新今日行情）。\n\n'
+          + '「确定」= 跳过今日更新，用本地缓存重算\n'
+          + '「取消」= 放弃本次刷新，换网络后重试\n\n'
+          + '降级模式下：结果为本地最后一根K线的收盘价，今天的最新价与涨跌幅拿不到，'
+          + '名称、市值沿用上次刷新时的数据。')) {
+          snap = TDXData.localSnap(K, stkPrev);
+          degraded = true;
+          if (snap.length < 500) throw new Error('本地日线可用记录只有 ' + snap.length + ' 只，不足以计算，请换网络后重试');
+          latest = TDXData.localLatestDate(K) || (S.meta && S.meta.lastDate) || latest;
+        } else {
+          throw new Error('只取到 ' + snap.length + ' 只行情：快照接口 qt.gtimg.cn 没连上。'
+            + '请换网络（数据切 Wi-Fi 或反过来）后重试，本地日线不会因此丢失');
+        }
       }
 
-      if (K.size < 500) {
+      if (degraded) {
+        // 没有当日行情：既不写今日K线，也不补下载新股（代码池来自快照）
+        stage('降级重算：使用本地日线，未更新今日行情', 84);
+      } else if (K.size < 500) {
         // 首次：下载全市场日线
         stage('首次使用，下载全市场日线（约 3-5 分钟）', 12);
         await TDXData.downloadAll(snap.map(function (s) { return s.code; }), new Set(K.keys()), function (d, t, f) {
@@ -1346,29 +1414,22 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
         if (rr.added || rr.updated || rr.fixed) {
           stage('今日日线：更新 ' + rr.updated + ' 只，追加 ' + rr.added + ' 只'
             + (rr.fixed ? '，修复重复K线 ' + rr.fixed + ' 只' : ''), 85);
+        } else {
+          stage('今日日线已是最新，无需写入（' + rr.noop + ' 只未变）', 85);
         }
       }
 
-      var stk = {};
-      snap.forEach(function (s) { stk[s.code] = [s.name, s.nmc, s.pe]; });
-      var tstat = todayStat(K);
-      S.meta = { lastDate: tstat.hit ? tstat.today : (tstat.any || latest), updatedAt: Date.now(), stocks: stk, count: snap.length };
-      await TDXData.putMeta(S.meta);
+      // 降级模式没有当日行情：不覆盖「上次同步」时间与股票静态数据，
+      // S.meta 保持 getMeta() 读到的旧值，面板上「上次同步」不会被认成刚同步过
+      if (!degraded) {
+        var stk = {};
+        snap.forEach(function (s) { stk[s.code] = [s.name, s.nmc, s.pe]; });
+        var tstat = todayStat(K);
+        S.meta = { lastDate: tstat.hit ? tstat.today : (tstat.any || latest), updatedAt: Date.now(), stocks: stk, count: snap.length };
+        await TDXData.putMeta(S.meta);
+      }
 
-      stage('计算六大策略', 86);
-      var res = await compute(K, snap);
-      var rows = res.rows, ts = fmtTs();
-      S.rows = rows;
-      renderRows(rows, '数据 <b>' + latest + '</b> ｜ 命中 <b>' + rows.length + '</b> 只 ｜ ' + ts
-        + (res.miss ? ' ｜ <i class="hintw">' + res.miss + ' 只无行情</i>' : ''));
-      saveHist(latest, rows, ts);
-      renderChips();
-      updateMeta();
-      refreshPanel();
-      stage(res.miss
-        ? '完成，命中 ' + rows.length + ' 只；另有 ' + res.miss + ' 只没取到行情（停牌或限流），未参与计算，点「同步日线」可补齐'
-        : '完成，命中 ' + rows.length + ' 只', 100, res.miss ? 'err' : '');
-      $('cp').disabled = !rows.length;
+      await showPick(K, snap, latest, degraded);
 
       // 后台增量补池（吸收新上市的票），失败静默，不影响本次结果
       TDXData.fetchStockList().then(function (cs) {
@@ -1380,6 +1441,28 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     } finally {
       busy(false);
     }
+  }
+
+  /* 选股结果渲染（选股页与「同步日线」的降级重算共用） */
+  async function showPick(K, snap, latest, degraded) {
+    stage('计算六大策略', 86);
+    var res = await compute(K, snap);
+    var rows = res.rows, ts = fmtTs();
+    S.rows = rows;
+    renderRows(rows, '数据 <b>' + latest + '</b> ｜ 命中 <b>' + rows.length + '</b> 只 ｜ ' + ts
+      + (res.miss ? ' ｜ <i class="hintw">' + res.miss + ' 只无行情</i>' : '')
+      + (degraded ? ' ｜ <i class="hintw">降级：本地缓存，未含今日行情</i>' : ''));
+    // 降级结果不写历史：免得把「上一交易日口径」冒充成今天的选股记录
+    if (!degraded) saveHist(latest, rows, ts);
+    renderChips();
+    updateMeta();
+    refreshPanel();
+    stage(degraded
+      ? '完成（降级模式）：命中 ' + rows.length + ' 只，口径为本地最后一根K线，未包含今日行情'
+      : (res.miss
+        ? '完成，命中 ' + rows.length + ' 只；另有 ' + res.miss + ' 只没取到行情（停牌或限流），未参与计算，点「同步日线」可补齐'
+        : '完成，命中 ' + rows.length + ' 只'), 100, (degraded || res.miss) ? 'err' : '');
+    $('cp').disabled = !rows.length;
   }
 
   async function compute(K, snap) {
@@ -1853,8 +1936,23 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       var K = await ensureK();
       stage('拉取全市场行情', 4);
       var snap = await TDXData.fetchSnapshot(null, function (d, t) { stage('行情 ' + d + '/' + t, 4 + 16 * d / t); });
-      if (snap.length < 500) throw new Error('只取到 ' + snap.length + ' 只行情：快照接口 qt.gtimg.cn 没连上，'
-        + '今日数据无法补齐。请换网络后重试（本地日线不受影响）');
+      if (snap.length < 500) {
+        // 同步的意义就是补今日数据，补不了就问用户是否只拿本地缓存重算一遍
+        var mPrev = (await TDXData.getMeta()) || {};
+        var stkPrev = mPrev.stocks || {};
+        var canLocal = K.size >= 500 && Object.keys(stkPrev).length > 500;
+        if (!canLocal || !confirm('只取到 ' + snap.length + ' 只行情：快照接口 qt.gtimg.cn 没连上，今日K线补不了。\n\n'
+          + '「确定」= 跳过同步，直接用本地 ' + K.size + ' 只日线重算选股\n'
+          + '「取消」= 放弃本次同步，换网络后重试\n\n'
+          + '本地日线不会丢，只是今天的最新价与涨跌幅拿不到。')) {
+          throw new Error('只取到 ' + snap.length + ' 只行情：快照接口 qt.gtimg.cn 没连上，'
+            + '今日数据无法补齐。请换网络后重试（本地日线不受影响）');
+        }
+        S.view = 'pick';
+        await showPick(K, TDXData.localSnap(K, stkPrev),
+          TDXData.localLatestDate(K) || mPrev.lastDate || TDXData.todayStr(), true);
+        return;
+      }
 
       var have = new Set(K.keys());
       stage('同步日线 ' + have.size + '/' + snap.length, 22);
@@ -1886,6 +1984,7 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       await TDXData.putMeta(m0);
       stage('同步完成：新增 ' + r.ok + ' 只 ｜ 今日K线 覆盖 ' + rr.updated + ' / 追加 ' + rr.added
         + (rr.fixed ? ' ｜ 修复重复 ' + rr.fixed : '')
+        + ((rr.added || rr.updated || rr.fixed) ? '' : '（其余 ' + rr.noop + ' 只未变，已跳过写入）')
         + (lag.length ? ' ｜ 补拉 ' + lag.length + ' 只' + (rf && rf.failed ? '（失败 ' + rf.failed + '）' : '') : ''), 100);
       updateMeta();
       refreshPanel();
