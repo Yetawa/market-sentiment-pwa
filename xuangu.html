@@ -87,6 +87,12 @@ display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
 .k span{display:block;font-size:11.5px;color:var(--dim)}
 .k b{display:block;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
 .note{font-size:11.5px;color:#A8A092;line-height:1.9;margin:6px 0 10px}
+.note>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:4px;
+color:#A8A092;font-size:11.5px;padding:3px 0;-webkit-tap-highlight-color:transparent}
+.note>summary::-webkit-details-marker{display:none}
+.note>summary::after{content:'▾';font-size:9px;line-height:1;transform:translateY(1px)}
+.note[open]>summary::after{content:'▴'}
+.note[open]>summary{margin-bottom:2px}
 
 /* 入选汇总 */
 .smeta{font-size:12.5px;color:var(--dim);margin:-2px 0 4px}
@@ -1752,7 +1758,9 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
     return '<td class="n ' + c + '">' + (v > 0 ? '+' : '') + v.toFixed(2) + '%</td>';
   }
 
-  /* 让表格占满剩余视口高度：表头 sticky 才有意义，纵向滚动发生在表格内部 */
+  /* 让表格占满剩余视口高度：表头 sticky 才有意义，纵向滚动发生在表格内部。
+     下限固定为「表头 + 5 行」——行高按实际渲染量出来，不同机型/字号都准，
+     以前写死 240px，小屏上只露 3 行半，等于白留了半屏空白。 */
   function fitSum(align) {
     var wrap = $('list') && $('list').querySelector('.tw');
     if (!wrap) return;
@@ -1765,14 +1773,24 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       window.scrollBy(0, Math.ceil(top) - 8);
       top = wrap.getBoundingClientRect().top;
     }
+    var tbl = wrap.querySelector('table');
+    var headEl = tbl && tbl.querySelector('thead');
+    var rowEl = tbl && tbl.tBodies[0] && tbl.tBodies[0].rows[0];
+    var headH = (headEl && headEl.offsetHeight) || 34;
+    var rowH = (rowEl && rowEl.offsetHeight) || 46;
+    // 表格能横向滚动，非 overlay 滚动条会吃掉十几像素高度（手机 Safari/Chrome 多为 0），
+    // 不计进去的话「表头 + 5 行」刚好差一点点，第 5 行只露半截
+    var sbH = Math.max(0, wrap.offsetHeight - wrap.clientHeight);
+    var floor = Math.round(headH + rowH * 5 + sbH + 2);   // 至少 5 只股票
     var avail = window.innerHeight - Math.min(Math.max(top, 8), window.innerHeight - 260) - dh - 12;
-    var h = Math.max(240, Math.round(avail));
+    var h = Math.max(floor, Math.round(avail));
     wrap.style.maxHeight = h + 'px';
-    // 二次校正：让整页不再纵向可滚，否则滑动页面会把表头带出屏幕
+    // 二次校正：尽量让整页不再纵向可滚，否则滑动页面会把表头带出屏幕；
+    // 但再挤也不能低于 5 行，宁可让页面多滚一点
     for (var i = 0; i < 2; i++) {
       var over = document.scrollingElement.scrollHeight - window.innerHeight;
       if (over <= 0) break;
-      var nh = Math.max(240, h - over);
+      var nh = Math.max(floor, h - over);
       if (nh === h) break;
       h = nh;
       wrap.style.maxHeight = h + 'px';
@@ -1832,15 +1850,19 @@ font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(44,62,80,.22)}
       + ' ' + (sd < 0 ? '降序' : '升序') + '</b>　·　点表头排序　·　点名称看行情</div>'
       + '<div class="tw"><table><colgroup>' + cols + '</colgroup>'
       + '<thead><tr>' + ths + '</tr></thead><tbody>' + body + '</tbody></table></div>'
-      + '<div class="note">入选价＝入选日收盘价，<b>攻防按当日 9:25 竞价开盘价</b>，入选涨幅随之按该价格算；'
+      + '<details class="note"><summary>口径与偏差说明（点击展开）</summary>'
+      + '入选价＝入选日收盘价，<b>攻防按当日 9:25 竞价开盘价</b>，入选涨幅随之按该价格算；'
       + '最新价＝最新一根 K 线收盘，近 N 日＝相对 N 个交易日前；同一只股票不同日期入选分行列出，日线不复权。'
       + '<br><b>注意</b>：历史信号里的 PE、流通市值过滤用的是当前值，存在前视偏差，'
-      + '历史入选只适合复盘信号形态，不宜直接当真实可成交记录。</div>';
+      + '历史入选只适合复盘信号形态，不宜直接当真实可成交记录。</details>';
 
     $('meta').innerHTML = '入选汇总 ｜ 近 ' + SUMDAYS + ' 个交易日 ｜ 截止 <b>' + o.date + '</b>';
     $('histBox').style.display = 'none';
     $('back').onclick = backPick;
     fitSum(!!align);
+    // 展开/收起口径说明会改变下方高度，重新量一次表格可用空间
+    var dt = $('list').querySelector('details.note');
+    if (dt) dt.addEventListener('toggle', function () { fitSum(false); });
     Array.prototype.forEach.call($('list').querySelectorAll('th'), function (th) {
       th.onclick = function () {
         var k = th.getAttribute('data-k');
