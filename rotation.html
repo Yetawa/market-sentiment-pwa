@@ -156,6 +156,7 @@ table.plain td{padding:5px 4px;border-bottom:1px solid #F1EBDF;font-variant-nume
 
 /* 实盘编辑 */
 .ehd{display:grid;grid-template-columns:1fr 74px 74px 20px;gap:6px;font-size:10px;color:#A8A092;padding:2px 0 5px}
+.ahd{grid-template-columns:1fr 64px 64px 18px;gap:5px}
 .ehd span:nth-child(2),.ehd span:nth-child(3){text-align:right}
 .erow{display:grid;grid-template-columns:1fr 74px 74px 20px;gap:6px;align-items:center;
 padding:8px 0;border-top:1px solid var(--line)}
@@ -167,6 +168,30 @@ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 text-align:right;padding:0 7px;font-size:12.5px;color:var(--ink);font-family:inherit;font-variant-numeric:tabular-nums}
 .erow .del{color:#C3BBAE;font-size:17px;text-align:center;cursor:pointer;line-height:1}
 .erow .del:active{color:var(--red)}
+
+/* 调仓档案 */
+.bb .btn{font-size:13px;letter-spacing:0}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.seg button{flex:1;height:38px;border-radius:8px;border:1px solid var(--line);background:#fff;
+color:var(--dim);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.arc{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:11px 12px;margin-bottom:9px}
+.arc .rh{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.arc .rh b{font-size:13px;color:var(--ink);font-weight:600}
+.arc .rh .rtx{font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+.arc .rt{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.chip{font-size:10.5px;line-height:1.5;background:#F4F0E6;border-radius:5px;padding:3px 7px;color:var(--ink)}
+.chip i{font-style:normal;color:var(--dim);margin-left:5px;font-variant-numeric:tabular-nums}
+.arc .ra{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;
+padding-top:8px;border-top:1px dashed var(--line)}
+.arc .ord{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:7px;font-size:10.5px;color:var(--dim)}
+.arow{display:grid;grid-template-columns:1fr 64px 64px 18px;gap:5px;align-items:center;
+padding:7px 0;border-top:1px solid var(--line)}
+.arow select,.arow input{width:100%;height:34px;border:1px solid var(--line);border-radius:7px;background:#fff;
+padding:0 6px;font-size:12px;color:var(--ink);font-family:inherit;font-variant-numeric:tabular-nums}
+.arow input{text-align:right}
+.arow .del{color:#C3BBAE;font-size:16px;text-align:center;cursor:pointer;line-height:1}
+.cmp-tb th:not(:first-child),.cmp-tb td:not(:first-child){text-align:right}
 </style>
 </head>
 <body>
@@ -246,6 +271,7 @@ text-align:right;padding:0 7px;font-size:12.5px;color:var(--ink);font-family:inh
       <b>行情判断</b>：宽度(价&gt;MA120占比)&lt;15%→普跌，双周且重点是仓位；15–30%→结构性行情，单周；&gt;30%且等权在MA120上方、ER&gt;10%→趋势上行，双周；其余双周<br>
       <b>例外</b>：6只主动ETF（158901/158907/158908/581000/581060/581090）上市不足，不参与打分，单列≤20%仓位持有<br>
       <b>实盘</b>：右上「编辑」可从建议组合一键重建/追加，也能手填份额与成本价；区间收益优先用账户每日快照，快照不足时按当前份额回溯历史价<br>
+      <b>调仓档案</b>：底部「档案」看最近半年推荐/实际/对照；调仓日自动留档推荐，实际执行手工录入，按日期自动配对<br>
       <b>行情</b>：点任意基金名称直接跳行情页（设置里可换腾讯/东方财富/天天基金/集思录）<br>
       <b>提示</b>：指标分是“当日强度”，盘中会跳动，收盘前14:50再看一次更稳
       </div>
@@ -260,6 +286,7 @@ text-align:right;padding:0 7px;font-size:12.5px;color:var(--ink);font-family:inh
 <div class="bottombar"><div class="bb">
   <button class="btn s" id="btnRefresh">刷新</button>
   <button class="btn s" id="btnPf">实盘</button>
+  <button class="btn s" id="btnHis">档案</button>
   <button class="btn p" id="btnRecord">记录调仓</button>
 </div></div>
 
@@ -301,6 +328,7 @@ text-align:right;padding:0 7px;font-size:12.5px;color:var(--ink);font-family:inh
     <textarea id="cfgPrem" style="width:100%;height:88px;border:1px solid var(--line);border-radius:8px;
     padding:8px 10px;font-size:12px;font-family:ui-monospace,monospace;color:var(--ink);background:#fff"></textarea>
     <div class="hint">内置 11-27 快照，超 8% 剔除</div></div>
+  <div class="sw"><span>调仓日自动留档推荐</span><span class="mini" id="btnAutoRec">开</span></div>
   <div class="sw"><span>持仓记录</span><span class="mini" id="btnReset">清空</span></div>
   <div class="sw"><span>行情缓存</span><span class="mini" id="btnClear">清除</span></div>
   <div class="sw"><span>持仓与设置</span><span class="mini" id="btnExport">导出</span></div>
@@ -315,6 +343,17 @@ text-align:right;padding:0 7px;font-size:12.5px;color:var(--ink);font-family:inh
 <div class="drawer" id="drawer2"><div class="dw">
   <div class="dh"><b>实盘记录</b><span id="dw2Close">×</span></div>
   <div id="pfForm"></div>
+</div></div>
+
+<div class="mask" id="mask3"></div>
+<div class="drawer" id="drawer3"><div class="dw">
+  <div class="dh"><b>调仓档案 · 最近半年</b><span id="dw3Close">×</span></div>
+  <div class="seg" id="hisTabs">
+    <button class="on" data-t="rec">推荐</button>
+    <button data-t="act">实际</button>
+    <button data-t="cmp">对照</button>
+  </div>
+  <div id="hisBody"></div>
 </div></div>
 
 <script>
@@ -360,9 +399,15 @@ const LS={
  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
  del(k){try{localStorage.removeItem(k)}catch(e){}}
 };
-const CFG=Object.assign({money:100000,freq:2,vol:0.20,topn:4,prem:null,exec:'same',site:'qq'},LS.get('fr_cfg',{}));
-const HOLD=LS.get('fr_hold',null);           // {date,items:[{code,weight,price,shares}],k}
+const CFG=Object.assign({money:100000,freq:2,vol:0.20,topn:4,prem:null,exec:'same',site:'qq',autoRec:true},LS.get('fr_cfg',{}));
+let HOLD=LS.get('fr_hold',null);             // {date,items:[{code,weight,price,shares}],k}
 let PF=LS.get('fr_pf',null);                 // 实盘 {cash,total_in,items:[{code,shares,cost}],hist:[{d,v}]}
+/* 调仓档案：推荐快照 / 实际快照，只留最近半年（180 天） */
+const HIST_DAYS=180;
+const pruneHist=a=>(Array.isArray(a)?a:[]).filter(x=>x&&x.date>=shiftDay(ymd(new Date()),-HIST_DAYS));
+let RECS=pruneHist(LS.get('fr_recs',[]));    // [{date,k,items,orders,ts,src}]
+let ACTS=pruneHist(LS.get('fr_acts',[]));    // [{date,items,orders,cash,note,ts}]
+LS.set('fr_recs',RECS); LS.set('fr_acts',ACTS);
 const PREM=Object.assign({},PREM_SNAP,CFG.prem||{});
 
 /* ================= 工具 ================= */
@@ -375,7 +420,23 @@ const fz=n=>Math.abs(n)<0.5?0:n;
 const samt=n=>{n=fz(n);return n===0?'¥0':(n>0?'+¥':'-¥')+fmt(Math.abs(n));};
 const spct=v=>{const x=v*100;return Math.abs(x)<0.005?'0.00%':(x>0?'+':'')+x.toFixed(2)+'%';};
 const sym=c=>/^(15|16|18)/.test(c)?'sz'+c:'sh'+c;
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function lot(target,px){ if(target<px*100) return 0; let sh=Math.round(target/px/100)*100; return sh<100?100:sh; }
+/* 持仓差异 → 买卖单，份额按 100 整数倍 */
+function diffHold(prev,next,pxMap){
+  const a={},b={};
+  (prev||[]).forEach(x=>{a[x.code]=+x.shares||0;});
+  (next||[]).forEach(x=>{b[x.code]=+x.shares||0;});
+  const out=[];
+  [...new Set([...Object.keys(a),...Object.keys(b)])].forEach(c=>{
+    const d=(b[c]||0)-(a[c]||0);
+    if(Math.abs(d)>=100){
+      const px=(pxMap&&pxMap[c])||0;
+      out.push({code:c,side:d>0?'买入':'卖出',shares:Math.abs(d),price:px});
+    }
+  });
+  return out;
+}
 
 /* ================= 行情外链 ================= */
 /* 501/506/160/161/164 为 LOF，其余按 ETF */
@@ -1322,6 +1383,294 @@ function renderRegime(){
   $('rgApply').style.display=(CFG.freq===(adv==='单周'?1:2))?'none':'inline';
 }
 
+/* ================= 调仓档案：推荐 / 实际 / 对照 ================= */
+const descRec=(a,b)=>a.date===b.date?(b.ts||0)-(a.ts||0):(a.date<b.date?1:-1);
+function buildRec(date,src,baseItems){
+  const {sel,w,k,met}=STATE;
+  const prev=Array.isArray(baseItems)?baseItems:((HOLD&&HOLD.items)?HOLD.items:[]);
+  const items=sel.map(c=>({code:c,weight:+(w[c]*k).toFixed(4),
+    price:+met[c].px.toFixed(3),shares:lot(CFG.money*w[c]*k,met[c].px)}));
+  const px={}; items.forEach(x=>px[x.code]=x.price);
+  prev.forEach(x=>{if(x.price&&px[x.code]==null) px[x.code]=x.price;});
+  return {date,k:+k.toFixed(3),items,orders:diffHold(prev,items,px),ts:Date.now(),src:src||'manual'};
+}
+function saveRec(src){
+  if(!STATE||!STATE.sel.length) return null;
+  const d=STATE.cal[STATE.cal.length-1];
+  const prevRec=RECS.filter(x=>x.date<d).sort(descRec)[0];
+  const rec=buildRec(d,src,src==='auto'&&prevRec?prevRec.items:null);
+  const old=RECS.find(r=>r.date===d);
+  if(old) rec.ts=old.ts;
+  RECS=pruneHist(RECS);
+  const i=RECS.findIndex(r=>r.date===d);
+  if(i>=0) RECS[i]=rec; else RECS.push(rec);
+  LS.set('fr_recs',RECS);
+  return rec;
+}
+function autoRecDay(){
+  if(!STATE||!STATE.cal||!STATE.cal.length) return false;
+  const last=STATE.cal[STATE.cal.length-1];
+  const d=new Date(last+'T00:00:00');
+  if(CFG.freq===0.5){
+    const day=d.getDate();
+    if(day===1||day===16) return true;
+    const prev=STATE.cal[STATE.cal.length-2];
+    if(!prev) return false;
+    const pd=new Date(prev+'T00:00:00');
+    // 1/16 落在周末时，顺延到下一个交易日补档
+    return (day<=3&&pd.getMonth()!==d.getMonth())||(day>=17&&day<=19&&pd.getDate()<16);
+  }
+  return !!(STATE.next&&STATE.next.isRebal);
+}
+function maybeAutoRec(){
+  if(CFG.autoRec===false||!autoRecDay()) return;
+  if(RECS.some(r=>r.date===STATE.cal[STATE.cal.length-1])) return;
+  saveRec('auto');
+}
+let HIS_TAB='rec', HIS_EDIT=null;
+function openHistory(tab){
+  HIS_TAB=tab||'rec'; HIS_EDIT=null;
+  renderHistory();
+  $('mask3').classList.add('on'); $('drawer3').classList.add('on');
+}
+function closeHistory(){ $('mask3').classList.remove('on'); $('drawer3').classList.remove('on'); }
+function renderHistory(){
+  document.querySelectorAll('#hisTabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===HIS_TAB));
+  if(HIS_TAB==='rec') renderRecTab();
+  else if(HIS_TAB==='act') renderActTab();
+  else renderCmpTab();
+}
+function renderRecTab(){
+  const list=RECS.slice().sort(descRec);
+  const d=STATE?STATE.cal[STATE.cal.length-1]:'—';
+  let h=`<div class="hint" style="font-size:10.5px;color:#A8A092;margin-bottom:10px;line-height:1.6">
+    只留最近 ${HIST_DAYS} 天 · 共 ${list.length} 条 · 调仓日自动留档${CFG.autoRec===false?'已关（设置里可开）':'已开'}</div>`;
+  h+=`<button class="btn s" id="hisSaveRec" style="width:100%;margin-bottom:10px">存档当前建议（${d}）</button>`;
+  if(!list.length) h+=`<div class="fold-tip">还没有推荐记录。点上面存档，或在调仓日打开页面自动留档。<br>过去没有存过推荐，无法凭空补出；实际成交可在「实际」页按日期补录。</div>`;
+  list.forEach(r=>{
+    h+=`<div class="arc">
+      <div class="rh"><b>${esc(r.date)} · ${r.src==='auto'?'自动留档':'手动记录'}</b>
+        <span class="mini" data-delrec="${r.ts}">删除</span></div>
+      <div class="rt">${(r.items||[]).map(x=>`<span class="chip">${esc(NAME[x.code]||x.code)}<i>${((x.weight||0)*100).toFixed(1)}%</i></span>`).join('')||'<span class="dim">空仓</span>'}</div>
+      <div class="ra"><span class="dim">仓位 ${Math.round((r.k||0)*100)}% · ${(r.items||[]).length}只</span>
+        <span class="dim">${(r.orders||[]).length} 笔买卖</span></div>
+      ${(r.orders||[]).length?`<div class="ord">${r.orders.map(o=>`<span class="${o.side==='买入'?'up':'down'}">${o.side} ${esc(NAME[o.code]||o.code)} ${fmt(o.shares)}份</span>`).join('')}</div>`:''}
+    </div>`;
+  });
+  h+=`<div class="sw" style="margin-top:12px"><span>清空调仓档案</span><span class="mini" id="hisClear">清空</span></div>`;
+  $('hisBody').innerHTML=h;
+  $('hisSaveRec').onclick=()=>{const r=saveRec('manual');if(r){renderHistory();setMsg('已存档 '+r.date);}else alert('数据未就绪');};
+  $('hisClear').onclick=()=>{
+    if(!confirm('清空全部推荐与实际调仓档案？此操作不可恢复。')) return;
+    RECS=[];ACTS=[];LS.set('fr_recs',RECS);LS.set('fr_acts',ACTS);renderHistory();setMsg('调仓档案已清空');
+  };
+  document.querySelectorAll('[data-delrec]').forEach(el=>{
+    el.onclick=()=>{
+      if(!confirm('删除这条推荐记录？')) return;
+      RECS=RECS.filter(r=>String(r.ts)!==el.dataset.delrec);
+      LS.set('fr_recs',RECS);renderHistory();
+    };
+  });
+}
+function nearestRec(date){
+  if(!date) return null;
+  const best=RECS.slice().map(r=>({r,d:Math.abs(diffDays(date,r.date))}))
+    .filter(x=>x.d<=10).sort((a,b)=>a.d-b.d||(b.r.ts||0)-(a.r.ts||0))[0];
+  return best?best.r:null;
+}
+function codeOptions(cur){
+  const set=new Set(POOL.map(x=>x[0]));
+  ACTIVE.forEach(x=>set.add(x[0]));
+  if(PF) (PF.items||[]).forEach(x=>set.add(x.code));
+  RECS.forEach(r=>(r.items||[]).forEach(x=>set.add(x.code)));
+  ACTS.forEach(a=>(a.items||[]).forEach(x=>set.add(x.code)));
+  Object.keys(EXT||{}).forEach(c=>set.add(c));
+  if(cur) set.add(cur);
+  return [...set].map(c=>`<option value="${esc(c)}" ${c===cur?'selected':''}>${esc(NAME[c]||c)}</option>`).join('');
+}
+function renderActRows(){
+  const box=$('actRows'); if(!box||!HIS_EDIT) return;
+  box.innerHTML=(HIS_EDIT.items||[]).map((x,i)=>`<div class="arow" data-i="${i}">
+    <select class="ac">${codeOptions(x.code)}</select>
+    <input class="ash" type="number" inputmode="numeric" step="100" value="${x.shares||''}" placeholder="0">
+    <input class="apr" type="number" inputmode="decimal" step="0.001" value="${x.price?(+x.price).toFixed(3):''}" placeholder="价">
+    <div class="del" data-i="${i}">×</div></div>`).join('')||'<div class="fold-tip">还没有持仓行，点「添加标的」</div>';
+  document.querySelectorAll('#actRows .del').forEach(el=>{
+    el.onclick=()=>{syncActForm();HIS_EDIT.items.splice(+el.dataset.i,1);renderHistory();};
+  });
+}
+function renderActForm(){
+  const E=HIS_EDIT;
+  return `<div class="arc" style="border-color:var(--teal)">
+    <div class="rh"><b>${E.ts?'编辑实际记录':'新增实际记录'}</b><span class="mini" id="actCancel">取消</span></div>
+    <div class="fld" style="margin-top:10px"><label>成交日期</label><input id="actDate" type="date" value="${esc(E.date)}"></div>
+    <div class="fld"><label>备注</label><input id="actNote" value="${esc(E.note||'')}" placeholder="例如：周四卖、周五尾盘买"></div>
+    <div class="ehd ahd"><span>标的</span><span>份额</span><span>成交价</span><span></span></div>
+    <div id="actRows"></div>
+    <button class="mini" id="actAddRow" style="margin:7px 0 11px">+ 添加标的</button>
+    <div class="fld"><label>现金余额（元）</label><input id="actCash" type="number" inputmode="decimal" value="${E.cash||0}"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn s" id="actFillRec">按推荐填入</button>
+      <button class="btn s" id="actFillPf">按实盘填入</button></div>
+    <button class="btn p" id="actSave" style="width:100%;margin-top:10px">保存实际调仓</button>
+    <div class="hint" style="font-size:10.5px;color:#A8A092;margin-top:9px;line-height:1.6">
+      保存时按上次实际持仓自动算出买卖单；份额填 0 的行会删除。</div>
+  </div>`;
+}
+function syncActForm(){
+  if(!HIS_EDIT||!$('actRows')) return;
+  HIS_EDIT.date=$('actDate').value||HIS_EDIT.date;
+  HIS_EDIT.note=$('actNote').value||'';
+  HIS_EDIT.cash=+$('actCash').value||0;
+  const arr=[];
+  document.querySelectorAll('#actRows .arow').forEach(r=>{
+    arr.push({code:r.querySelector('.ac').value,
+      shares:Math.max(0,Math.round(+r.querySelector('.ash').value||0)),
+      price:Math.max(0,+r.querySelector('.apr').value||0)});
+  });
+  HIS_EDIT.items=arr;
+}
+function renderActTab(){
+  const list=ACTS.slice().sort(descRec);
+  let h=`<div class="hint" style="font-size:10.5px;color:#A8A092;margin-bottom:10px;line-height:1.6">
+    只留最近 ${HIST_DAYS} 天 · 共 ${list.length} 条 · 填实际成交后的持仓与现金</div>`;
+  if(HIS_EDIT){ h+=renderActForm(); }
+  h+=`<button class="btn s" id="actNew" style="width:100%;margin-bottom:10px">+ 新增实际记录</button>`;
+  if(!list.length) h+=`<div class="fold-tip">还没有实际记录。点上面新增，可从最近一次推荐一键填入再改；日期可改，支持补录过去半年。</div>`;
+  list.forEach(a=>{
+    const mv=(a.items||[]).reduce((s,x)=>s+(x.shares||0)*(x.price||0),0);
+    h+=`<div class="arc">
+      <div class="rh"><b>${esc(a.date)}${a.note?' · '+esc(a.note):''}</b>
+        <span><span class="mini" data-editact="${a.ts}">编辑</span> · <span class="mini" data-delact="${a.ts}">删除</span></span></div>
+      <div class="rt">${(a.items||[]).map(x=>`<span class="chip">${esc(NAME[x.code]||x.code)}<i>${fmt(x.shares)}份</i></span>`).join('')||'<span class="dim">空仓</span>'}</div>
+      <div class="ra"><span class="dim">市值 ¥${fmt(mv)} · 现金 ¥${fmt(a.cash||0)}</span>
+        <span class="dim">${(a.orders||[]).length} 笔成交</span></div>
+    </div>`;
+  });
+  $('hisBody').innerHTML=h;
+  if(HIS_EDIT) renderActRows();
+  $('actNew').onclick=()=>{
+    const d=STATE?STATE.cal[STATE.cal.length-1]:ymd(new Date());
+    const r=nearestRec(d);
+    HIS_EDIT={date:d,note:'',cash:r?Math.round(CFG.money*(1-(r.k||0))):0,
+      items:r?(r.items||[]).map(x=>({code:x.code,shares:x.shares||0,price:x.price||0})):[],ts:0};
+    renderHistory();
+  };
+  const cancelBtn=$('actCancel');
+  if(cancelBtn) cancelBtn.onclick=()=>{HIS_EDIT=null;renderHistory();};
+  if(HIS_EDIT){
+    $('actAddRow').onclick=()=>{syncActForm();HIS_EDIT.items.push({code:'511130',shares:0,price:0});renderHistory();};
+    $('actFillRec').onclick=()=>{
+      const r=nearestRec($('actDate').value);
+      if(!r){alert('附近 10 天没有推荐记录');return;}
+      syncActForm();
+      HIS_EDIT.items=(r.items||[]).map(x=>({code:x.code,shares:x.shares||0,price:x.price||0}));
+      HIS_EDIT.cash=Math.round(CFG.money*(1-(r.k||0)));
+      renderHistory();
+    };
+    $('actFillPf').onclick=()=>{
+      if(!PF||!PF.items||!PF.items.length){alert('还没有实盘账户记录');return;}
+      syncActForm();
+      HIS_EDIT.items=PF.items.map(x=>({code:x.code,shares:x.shares||0,
+        price:(STATE&&STATE.met[x.code]&&STATE.met[x.code].px)||x.cost||0}));
+      HIS_EDIT.cash=PF.cash||0;
+      renderHistory();
+    };
+    $('actSave').onclick=()=>{
+      syncActForm();
+      const E=HIS_EDIT;
+      E.items=(E.items||[]).filter(x=>x.shares>0&&/^\d{6}$/.test(x.code));
+      if(!E.items.length&&!(E.cash>0)){alert('至少填一条持仓或现金');return;}
+      if(E.items.some(x=>!(x.price>0))){alert('有持仓行没填成交价');return;}
+      const px={}; E.items.forEach(x=>px[x.code]=x.price);
+      const prev=ACTS.filter(a=>a.date<E.date&&String(a.ts)!==String(E.ts)).sort(descRec)[0];
+      E.orders=diffHold(prev?prev.items:[],E.items,px);
+      E.ts=E.ts||Date.now();
+      const i=ACTS.findIndex(a=>String(a.ts)===String(E.ts));
+      if(i>=0) ACTS[i]=E; else ACTS.push(E);
+      ACTS=pruneHist(ACTS); LS.set('fr_acts',ACTS);
+      HIS_EDIT=null; renderHistory(); setMsg('已保存实际调仓 '+E.date);
+    };
+  }
+  document.querySelectorAll('[data-editact]').forEach(el=>{
+    el.onclick=()=>{
+      const a=ACTS.find(x=>String(x.ts)===el.dataset.editact);
+      if(!a) return;
+      HIS_EDIT=JSON.parse(JSON.stringify(a)); renderHistory();
+    };
+  });
+  document.querySelectorAll('[data-delact]').forEach(el=>{
+    el.onclick=()=>{
+      if(!confirm('删除这条实际记录？')) return;
+      ACTS=ACTS.filter(a=>String(a.ts)!==el.dataset.delact);
+      LS.set('fr_acts',ACTS);renderHistory();
+    };
+  });
+}
+function compareRecAct(r,a){
+  const rm={},am={};
+  (r.items||[]).forEach(x=>rm[x.code]=x.weight||0);
+  const mv=(a.items||[]).reduce((s,x)=>s+(x.shares||0)*(x.price||0),0);
+  const tot=mv+(a.cash||0);
+  (a.items||[]).forEach(x=>am[x.code]=tot>0?(x.shares||0)*(x.price||0)/tot:0);
+  const codes=[...new Set([...Object.keys(rm),...Object.keys(am)])];
+  const rows=[]; let dev=0,matched=0,miss=0,extra=0;
+  codes.forEach(c=>{
+    const rw=rm[c]||0, aw=am[c]||0;
+    dev+=Math.abs(aw-rw);
+    let st='一致';
+    if(rw>0.005&&aw<=0.005){st='漏买';miss++;}
+    else if(rw<=0.005&&aw>0.005){st='多买';extra++;}
+    else if(rw>0.005&&aw>0.005){
+      matched++;
+      if(Math.abs(aw-rw)>0.02) st=aw>rw?'超配':'低配';
+    }
+    rows.push({c,rw,aw,st});
+  });
+  // 现金也纳入对照，避免“满仓执行”被误判为完全一致
+  const rCash=Math.max(0,1-(r.items||[]).reduce((s,x)=>s+(x.weight||0),0));
+  const aCash=tot>0?(a.cash||0)/tot:0;
+  dev+=Math.abs(aCash-rCash);
+  if(rCash>0.005||aCash>0.005){
+    let st='一致';
+    if(rCash>0.005&&aCash<=0.005) st='漏留现金';
+    else if(rCash<=0.005&&aCash>0.005) st='多留现金';
+    else if(Math.abs(aCash-rCash)>0.02) st=aCash>rCash?'现金超配':'现金低配';
+    rows.push({c:'CASH',rw:rCash,aw:aCash,st});
+  }
+  rows.sort((x,y)=>Math.abs(y.aw-y.rw)-Math.abs(x.aw-x.rw));
+  return {dev:dev/2,match:matched/Math.max(1,Object.keys(rm).length),miss,extra,rows};
+}
+function renderCmpTab(){
+  const list=ACTS.slice().sort(descRec);
+  let h=`<div class="note" style="margin-bottom:11px">按日期自动配对最近推荐（±10 天）。偏差 = 两侧权重差的绝对值之和 ÷ 2，可理解为还需多少换手才能对齐。</div>`;
+  if(!list.length) h+=`<div class="fold-tip">还没有实际记录，先去「实际」页录入一条。</div>`;
+  list.forEach(a=>{
+    const r=nearestRec(a.date);
+    if(!r){
+      h+=`<div class="arc"><div class="rh"><b>${esc(a.date)}</b><span class="dim">无对应推荐</span></div>
+        <div class="ra"><span class="dim">附近 10 天没有推荐快照</span></div></div>`;
+      return;
+    }
+    const c=compareRecAct(r,a);
+    h+=`<div class="arc">
+      <div class="rh"><b>${esc(a.date)} ↔ ${esc(r.date)}</b>
+        <span class="rtx ${c.dev>0.15?'down':''}">偏差 ${(c.dev*100).toFixed(1)}pp</span></div>
+      <div class="ra"><span class="dim">执行一致度 ${Math.round(c.match*100)}% · 漏买 ${c.miss} · 多买 ${c.extra}</span>
+        <span class="dim">${c.rows.filter(x=>x.c!=='CASH').length}只${c.rows.some(x=>x.c==='CASH')?'+现金':''}</span></div>
+      <table class="plain cmp-tb" style="margin-top:8px"><thead><tr><th>标的</th><th>推荐</th><th>实际</th><th>差</th></tr></thead><tbody>
+      ${c.rows.map(x=>{
+        const d=(x.aw-x.rw)*100, dd=Math.abs(d)<0.05?0:d;
+        return `<tr><td>${x.c==='CASH'?'现金':esc(NAME[x.c]||x.c)}<span class="dim"> ${x.st}</span></td>
+        <td>${(x.rw*100).toFixed(1)}%</td><td>${(x.aw*100).toFixed(1)}%</td>
+        <td class="${dd>0?'up':(dd<0?'down':'')}">${dd>0?'+':''}${dd.toFixed(1)}pp</td></tr>`;
+      }).join('')}
+      </tbody></table>
+    </div>`;
+  });
+  $('hisBody').innerHTML=h;
+}
+
 /* ================= 主流程 ================= */
 async function run(){
   try{
@@ -1342,6 +1691,7 @@ async function run(){
     const next=nextRebal(cal);
     STATE={met,cal,sel,w,k,pv,passedCount,rank,next,data};
     renderAll();
+    maybeAutoRec();
     loadExt();
     setMsg('已更新');
   }catch(e){
@@ -1366,6 +1716,7 @@ function openDrawer(on){
     $('cfgExec').value=CFG.exec||'same';
     $('cfgVol').value=CFG.vol===0?'0':CFG.vol.toFixed(2);
     $('cfgSite').value=CFG.site||'qq';
+    $('btnAutoRec').textContent=CFG.autoRec===false?'关':'开';
     $('cfgPrem').value=Object.keys(CFG.prem||{}).map(k=>k+' '+CFG.prem[k]).join('\n');
   }
 }
@@ -1414,19 +1765,29 @@ $('btnPf').onclick=()=>openPf();
 $('pfEdit').onclick=()=>openPf();
 $('mask2').onclick=()=>closePf();
 $('dw2Close').onclick=()=>closePf();
+$('btnHis').onclick=()=>openHistory('rec');
+$('mask3').onclick=()=>closeHistory();
+$('dw3Close').onclick=()=>closeHistory();
+document.querySelectorAll('#hisTabs button').forEach(b=>{
+  b.onclick=()=>{HIS_TAB=b.dataset.t;HIS_EDIT=null;renderHistory();};
+});
+$('btnAutoRec').onclick=()=>{
+  CFG.autoRec=CFG.autoRec===false;
+  LS.set('fr_cfg',CFG); $('btnAutoRec').textContent=CFG.autoRec?'开':'关';
+  setMsg('调仓日自动留档已'+(CFG.autoRec?'开启':'关闭'));
+};
 
 $('btnRecord').onclick=()=>{
-  if(!STATE||!STATE.sel.length) return;
-  const {sel,w,k,met}=STATE;
-  const items=sel.map(c=>({code:c,weight:+(w[c]*k).toFixed(4),price:met[c].px,
-    shares:lot(CFG.money*w[c]*k,met[c].px)}));
-  const rec={date:STATE.cal[STATE.cal.length-1],k:+k.toFixed(3),items,ts:Date.now()};
-  LS.set('fr_hold',rec); location.reload();
+  const rec=saveRec('manual');
+  if(!rec){setMsg('数据未就绪或当前空仓，暂时无法记录');return;}
+  HOLD=rec; LS.set('fr_hold',rec);
+  replan(); setMsg('已记录推荐调仓 '+rec.date);
+  openHistory('rec');
 };
 $('btnReset').onclick=()=>{if(confirm('清空持仓记录？下次打开会重新显示建仓建议。')){LS.del('fr_hold');location.reload();}};
 $('btnClear').onclick=()=>{Object.keys(localStorage).filter(k=>k.startsWith('fr_k_')).forEach(k=>localStorage.removeItem(k));setMsg('缓存已清除');};
 $('btnExport').onclick=()=>{
-  const blob=new Blob([JSON.stringify({cfg:CFG,hold:LS.get('fr_hold',null),pf:PF,prem:CFG.prem||{}},null,1)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({cfg:CFG,hold:LS.get('fr_hold',null),pf:PF,prem:CFG.prem||{},recs:RECS,acts:ACTS},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='rotation-backup-'+ymd(new Date())+'.json'; a.click();
 };
@@ -1439,6 +1800,8 @@ $('fileImp').onchange=e=>{
     if(j.cfg) LS.set('fr_cfg',Object.assign(CFG,j.cfg));
     if(j.hold) LS.set('fr_hold',j.hold);
     if(j.pf) LS.set('fr_pf',j.pf);
+    if(Array.isArray(j.recs)) LS.set('fr_recs',pruneHist(j.recs));
+    if(Array.isArray(j.acts)) LS.set('fr_acts',pruneHist(j.acts));
     location.reload();
   }catch(err){alert('文件格式不对')}};
   r.readAsText(f);
