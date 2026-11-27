@@ -45,6 +45,10 @@ h2 small{font-size:11px;color:#A8A092;font-weight:400;margin-left:auto;cursor:po
 .act .row3 div{flex:1;text-align:center}
 .act .row3 b{display:block;font-size:17px;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 .act .row3 span{font-size:10.5px;color:var(--dim)}
+.act .row3 a{display:block;color:inherit;text-decoration:none;border-bottom:1px dotted #CFC7B8}
+.act .row3 a:active{color:var(--teal);border-bottom-color:var(--teal)}
+#passedBox{margin-top:12px}
+#passedBox .fold-tip{padding:8px 10px}
 
 /* 行情判断 */
 .rg{background:var(--card);border-radius:11px;padding:14px 15px 13px;box-shadow:0 1px 4px rgba(44,62,80,.07)}
@@ -198,7 +202,7 @@ padding:0 6px;font-size:12px;color:var(--ink);font-family:inherit;font-variant-n
 <div class="wrap">
   <header>
     <div>
-      <h1>轮动台 <span>48只自选 · 动量+指标双打分</span></h1>
+      <h1>轮动台 <span id="poolMeta">50只自选 · 动量+指标双打分</span></h1>
       <div class="meta" id="meta">数据准备中…</div>
     </div>
     <div id="gear">⚙</div>
@@ -210,10 +214,11 @@ padding:0 6px;font-size:12px;color:var(--ink);font-family:inherit;font-variant-n
       <div class="big" id="actTitle">—</div>
       <div class="sub" id="actSub">—</div>
       <div class="row3">
-        <div><b id="mBreadth">—</b><span>达标标的</span></div>
+        <div><a id="lnkBreadth" class="lk" href="#"><b id="mBreadth">—</b></a><span>达标标的 ›</span></div>
         <div><b id="mVol">—</b><span>组合波动</span></div>
         <div><b id="mPos">—</b><span>建议仓位</span></div>
       </div>
+      <div class="tb list hidden" id="passedBox"></div>
     </div>
   </section>
 
@@ -251,9 +256,9 @@ padding:0 6px;font-size:12px;color:var(--ink);font-family:inherit;font-variant-n
   </section>
 
   <section id="secRank" class="hidden">
-    <h2>全池排名 <em>42只 · 按动量分</em><small id="btnRank2">收起 ‹</small></h2>
+    <h2>全池排名 <em id="rankMeta">44只 · 按综合分</em><small id="btnRank2">收起 ‹</small></h2>
     <div class="tb list" id="rank"></div>
-    <div class="fold-tip">条=动量分（灰为负）· 中列为溢价参考 · ✕ 表示趋势或溢价不达标</div>
+    <div class="fold-tip">条=综合分（灰为负）· 右侧为当日涨跌，不是买入信号 · ✕ 表示趋势或溢价不达标</div>
   </section>
 
   <section>
@@ -272,6 +277,7 @@ padding:0 6px;font-size:12px;color:var(--ink);font-family:inherit;font-variant-n
       <b>例外</b>：6只主动ETF（158901/158907/158908/581000/581060/581090）上市不足，不参与打分，单列≤20%仓位持有<br>
       <b>实盘</b>：右上「编辑」可从建议组合一键重建/追加，也能手填份额与成本价；区间收益优先用账户每日快照，快照不足时按当前份额回溯历史价<br>
       <b>调仓档案</b>：底部「档案」看最近半年推荐/实际/对照；调仓日自动留档推荐，实际执行手工录入，按日期自动配对<br>
+      <b>排行榜</b>：按综合分（动量60%＋指标40%）排序，右侧百分比是当日涨跌；点「达标标的」可看通过趋势/溢价过滤的具体品种，点名称跳行情<br>
       <b>行情</b>：点任意基金名称直接跳行情页（设置里可换腾讯/东方财富/天天基金/集思录）<br>
       <b>提示</b>：指标分是“当日强度”，盘中会跳动，收盘前14:50再看一次更稳
       </div>
@@ -286,8 +292,7 @@ padding:0 6px;font-size:12px;color:var(--ink);font-family:inherit;font-variant-n
 <div class="bottombar"><div class="bb">
   <button class="btn s" id="btnRefresh">刷新</button>
   <button class="btn s" id="btnPf">实盘</button>
-  <button class="btn s" id="btnHis">档案</button>
-  <button class="btn p" id="btnRecord">记录调仓</button>
+  <button class="btn p" id="btnHis">调仓档案</button>
 </div></div>
 
 <div class="mask" id="mask"></div>
@@ -363,8 +368,8 @@ const POOL=[
  ['159915','创业板ETF','A成长'],['159967','创业板成长','A成长'],['588000','科创50ETF','A成长'],
  ['501096','国联安科创LOF','A成长'],['506008','科创板长城','A成长'],['159819','人工智能ETF','A成长'],
  ['515880','通信ETF','A成长'],['159516','半导体设备','A成长'],['159530','机器人ETF','A成长'],
- ['159869','游戏ETF','A成长'],['159218','卫星ETF','A成长'],['159552','中证2000增强','A成长'],
- ['512100','中证1000ETF','A成长'],
+ ['159869','游戏ETF','A成长'],['516620','影视ETF国泰','A成长'],['159218','卫星ETF','A成长'],
+ ['159552','中证2000增强','A成长'],['561550','500增强ETF','A成长'],['512100','中证1000ETF','A成长'],
  // A价值
  ['512800','银行ETF','A价值'],['515220','煤炭ETF','A价值'],['512690','酒ETF','A价值'],
  ['512200','房地产ETF','A价值'],['515030','新能源车ETF','A价值'],['562800','稀有金属ETF','A价值'],
@@ -736,7 +741,7 @@ function pick(met){
       .forEach(o=>{ if(sel.length<CFG.topn) add(o.c); });
   // 2 再用新面孔补齐
   for(const c of sorted){ if(sel.length>=CFG.topn) break; add(c); }
-  return {sel,rank,passedCount:passed.length};
+  return {sel,rank,passed,passedCount:passed.length};
 }
 function weights(sel,met){
   if(!sel.length) return {};
@@ -1081,10 +1086,12 @@ async function loadExt(){
 /* ================= 渲染 ================= */
 let STATE=null;
 function renderAll(){
-  const {met,cal,sel,w,k,pv,passedCount,next}=STATE;
+  const {met,cal,sel,w,k,pv,passed,passedCount,next}=STATE;
   const money=CFG.money||100000;
   // 头部
   const last=cal[cal.length-1];
+  $('poolMeta').textContent=(POOL.length+ACTIVE.length)+'只自选 · 动量+指标双打分';
+  $('rankMeta').textContent=POOL.length+'只 · 按综合分';
   $('meta').innerHTML=`数据 <b>${last}</b> · ${Object.keys(met).filter(c=>met[c]).length}/${POOL.length} 只 · `+
     (new Date().getHours()<15?'盘中':'收盘后');
   // 动作卡
@@ -1125,7 +1132,8 @@ function renderAll(){
       ? `本周换仓已完成，下次 <b>${next.date}</b>。`
       : `下次 <b>${next.date}</b>（${next.tdays} 个交易日后）<br>破 MA60 或跌出前8 再动`;
   }
-  $('mBreadth').textContent=passedCount+'/'+POOL.length;
+  $('mBreadth').textContent=(passed||[]).length+'/'+POOL.length;
+  STATE.passedSame=renderPassed(passed||[],met,sel);
   $('mVol').textContent=pct(pv,0);
   $('mPos').textContent=Math.round(k*100)+'%';
   $('comboMeta').textContent=`${sel.length}只 · 仓位${Math.round(k*100)}%`;
@@ -1274,6 +1282,30 @@ function renderHealth(sel,w,met,prevMap){
   });
   $('health').innerHTML=h;
   function row(c,t,_,k){return `<div class="item"><div class="l"><div class="nm">${NAME[c]||c}</div><div class="sub">${t}</div></div></div>`}
+}
+
+/* 「达标标的」展开：与全池排名一致就直接跳排名，否则单独列出可点行情 */
+function renderPassed(passed,met,sel){
+  const box=$('passedBox');
+  const all=Object.keys(met).filter(c=>met[c]).sort((a,b)=>met[b].comp-met[a].comp);
+  const same=!passed.length||(passed.length===all.length&&passed.every(c=>all.includes(c)));
+  box.innerHTML='';
+  box.classList.add('hidden');
+  if(same) return true;
+  const allRank={}; all.forEach((c,i)=>allRank[c]=i+1);
+  const arr=passed.slice().sort((a,b)=>met[b].comp-met[a].comp);
+  let h=`<div class="fold-tip">通过趋势＋溢价过滤 · ${arr.length}只 · 点名称看行情</div>`;
+  arr.forEach((c,i)=>{
+    const m=met[c], p=PREM[c];
+    const why=CROSS(c)&&p!=null?`溢${p.toFixed(1)}%`:'境内';
+    h+=`<div class="item"><div class="rk">${i+1}</div>
+      <div class="l"><div class="nm">${nl(c,sel.includes(c)?'<i class="tag">已选</i>':'')}</div>
+      <div class="sub">全池#${allRank[c]} · 综${(m.comp*100).toFixed(0)} · ${LAYER[c]} · ${why}</div></div>
+      <div class="r"><div class="wt ${cls(m.day)}">${(m.day*100).toFixed(1)}%</div><div class="amt">当日</div></div></div>`;
+  });
+  h+=`<div class="fold-tip">全池排名按综合分，右侧为当日涨跌；未通过过滤的品种不会出现在买入建议里</div>`;
+  box.innerHTML=h;
+  return false;
 }
 
 function renderRank(met){
@@ -1684,12 +1716,12 @@ async function run(){
       const m=calc(a); if(m) met[c]=m;
     });
     if(Object.keys(met).length<20) throw new Error('有效数据不足');
-    const {sel,rank,passedCount}=pick(met);
+    const {sel,rank,passed,passedCount}=pick(met);
     const w=weights(sel,met);
     const pv=portVol(w,met);
     const k=CFG.vol>0?Math.min(1,CFG.vol/Math.max(pv,0.02)):1;
     const next=nextRebal(cal);
-    STATE={met,cal,sel,w,k,pv,passedCount,rank,next,data};
+    STATE={met,cal,sel,w,k,pv,passed,passedCount,rank,next,data};
     renderAll();
     maybeAutoRec();
     loadExt();
@@ -1722,11 +1754,11 @@ function openDrawer(on){
 }
 function replan(){
   if(!STATE||!STATE.met) return;
-  const {sel,rank,passedCount}=pick(STATE.met);
+  const {sel,rank,passed,passedCount}=pick(STATE.met);
   const w=weights(sel,STATE.met);
   const pv=portVol(w,STATE.met);
   const k=CFG.vol>0?Math.min(1,CFG.vol/Math.max(pv,0.02)):1;
-  Object.assign(STATE,{sel,w,k,pv,rank,passedCount});
+  Object.assign(STATE,{sel,w,k,pv,rank,passed,passedCount});
   renderAll();
 }
 
@@ -1777,12 +1809,13 @@ $('btnAutoRec').onclick=()=>{
   setMsg('调仓日自动留档已'+(CFG.autoRec?'开启':'关闭'));
 };
 
-$('btnRecord').onclick=()=>{
-  const rec=saveRec('manual');
-  if(!rec){setMsg('数据未就绪或当前空仓，暂时无法记录');return;}
-  HOLD=rec; LS.set('fr_hold',rec);
-  replan(); setMsg('已记录推荐调仓 '+rec.date);
-  openHistory('rec');
+$('lnkBreadth').onclick=e=>{
+  e.preventDefault();
+  if(!STATE) return;
+  if(STATE.passedSame){ toggleRank(true); return; }
+  const box=$('passedBox');
+  box.classList.toggle('hidden');
+  if(!box.classList.contains('hidden')) box.scrollIntoView({behavior:'smooth',block:'nearest'});
 };
 $('btnReset').onclick=()=>{if(confirm('清空持仓记录？下次打开会重新显示建仓建议。')){LS.del('fr_hold');location.reload();}};
 $('btnClear').onclick=()=>{Object.keys(localStorage).filter(k=>k.startsWith('fr_k_')).forEach(k=>localStorage.removeItem(k));setMsg('缓存已清除');};
