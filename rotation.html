@@ -239,7 +239,7 @@ text-align:right;padding:0 7px;font-size:12.5px;color:var(--ink);font-family:inh
       <b>综合分</b>：0.6×动量排名 + 0.4×指标排名（都是42只内的百分位）<br>
       <b>动量</b>：(0.3×近3月 + 0.2×近6月 + 0.5×近1月) ÷ 63日年化波动<br>
       <b>指标</b>：通达信主图分（趋势30+资金25+形态20+动量15+风险10，含上涨概率修正）<br>
-      <b>否决</b>：价&lt;MA120 或 MA20&lt;MA60 剔除；跨境溢价&gt;5%剔除<br>
+      <b>否决</b>：价&lt;MA120 或 MA20&lt;MA60 剔除；跨境溢价&gt;8%剔除（涨停ETF不因涨幅被排除）<br>
       <b>选几只</b>：4只最优（可改5/6）；同层≤2只，两两126日相关&lt;0.9，跌出前8才卖<br>
       <b>权重</b>：1/波动，单只15%–30%；只数≤3 时上限放到40%（否则1/3=33%会顶破30%，逆波动失效）；不满5只的钱进511130<br>
       <b>仓位</b>：目标波动20%，仓位=20%÷近60日组合波动<br>
@@ -300,7 +300,7 @@ text-align:right;padding:0 7px;font-size:12.5px;color:var(--ink);font-family:inh
   <div class="fld"><label>跨境溢价参考（%，按代码，一行一个）</label>
     <textarea id="cfgPrem" style="width:100%;height:88px;border:1px solid var(--line);border-radius:8px;
     padding:8px 10px;font-size:12px;font-family:ui-monospace,monospace;color:var(--ink);background:#fff"></textarea>
-    <div class="hint">内置 11-27 快照，超 5% 剔除</div></div>
+    <div class="hint">内置 11-27 快照，超 8% 剔除</div></div>
   <div class="sw"><span>持仓记录</span><span class="mini" id="btnReset">清空</span></div>
   <div class="sw"><span>行情缓存</span><span class="mini" id="btnClear">清除</span></div>
   <div class="sw"><span>持仓与设置</span><span class="mini" id="btnExport">导出</span></div>
@@ -658,7 +658,8 @@ function holdingCodes(){
 function pick(met){
   composeScores(met);
   const codes=Object.keys(met).filter(c=>met[c]);
-  const passed=codes.filter(c=>met[c].trend&&(!CROSS(c)||(PREM[c]==null?true:PREM[c]<=5)));
+  // 涨停ETF不排除：当日涨幅不参与否决，仅按趋势+溢价上限过滤
+  const passed=codes.filter(c=>met[c].trend&&(!CROSS(c)||(PREM[c]==null?true:PREM[c]<=8)));
   const sorted=passed.sort((a,b)=>met[b].comp-met[a].comp);
   const rank={}; sorted.forEach((c,i)=>rank[c]=i+1);
   const prev=holdingCodes();
@@ -1043,7 +1044,7 @@ function renderAll(){
     $('actTitle').className='big warn';
     $('actSub').innerHTML=`<b>14:50–14:55</b> 用限价单买入，别用市价单。下一次 ${next.date}`;
   }else if(plan.role==='both'){
-    $('actTitle').textContent='今日调仓（尾盘一次完成）';
+    $('actTitle').textContent='今日调仓';
     $('actTitle').className='big warn';
     $('actSub').innerHTML=`<b>14:50–14:55</b> 先卖后买，无空仓。下一次 ${next.date}`;
   }else if(plan.role==='before'){
@@ -1220,7 +1221,7 @@ function renderRank(met){
   arr.forEach((c,i)=>{
     const m=met[c], p=PREM[c];
     const s=Math.max(0,Math.min(1,m.comp));
-    const ok=m.trend&&(!CROSS(c)||p==null||p<=5);
+    const ok=m.trend&&(!CROSS(c)||p==null||p<=8);
     h+=`<div class="item"><div class="rk">${i+1}</div>
       <div class="l"><div class="nm">${nl(c,ok?'':'<span class="dim"> ✕</span>')}</div>
       <div class="sub">综${(m.comp*100).toFixed(0)} · 动#${m.momR} · 指#${m.tdxR||'—'}(${m.tdx!=null?m.tdx.toFixed(0):'—'}) · 溢${p!=null?p.toFixed(1)+'%':'—'}</div></div>
@@ -1232,10 +1233,10 @@ function renderRank(met){
 
 function warn(){
   const {met,sel,w,k}=STATE; const ws=[];
-  const hi=Object.keys(met).filter(c=>CROSS(c)&&PREM[c]!=null&&PREM[c]>5)
+  const hi=Object.keys(met).filter(c=>CROSS(c)&&PREM[c]!=null&&PREM[c]>8)
     .sort((a,b)=>PREM[b]-PREM[a]).slice(0,3);
   if(hi.length) ws.push(`<b>溢价超限</b>：${hi.map(c=>`${NAME[c]} ${PREM[c].toFixed(0)}%`).join('、')} —— 已从候选剔除，别因为"动量分高"去接。`);
-  if(sel.length&&sel.some(CROSS)&&Math.max(...sel.filter(CROSS).map(c=>PREM[c]||0))>4)
+  if(sel.length&&sel.some(CROSS)&&Math.max(...sel.filter(CROSS).map(c=>PREM[c]||0))>7)
     ws.push(`持仓中的跨境品种溢价接近红线，加仓前务必核对实时溢价。`);
   const pairs=[];
   for(let i=0;i<sel.length;i++)for(let j=i+1;j<sel.length;j++){
@@ -1342,7 +1343,7 @@ async function run(){
     STATE={met,cal,sel,w,k,pv,passedCount,rank,next,data};
     renderAll();
     loadExt();
-    setMsg(`已更新 · ${cal[cal.length-1]} · ${Object.keys(met).length}只`);
+    setMsg('已更新');
   }catch(e){
     setMsg('加载失败：'+e.message,(true));
     if(!STATE) $('actTitle').textContent='数据未就绪';
