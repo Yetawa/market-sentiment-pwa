@@ -234,14 +234,14 @@ text-align:right;padding:0 7px;font-size:12.5px;color:var(--ink);font-family:inh
   <section>
     <h2>规则速查<small id="ruleTog">展开 ›</small></h2>
     <div class="note">
-      <div>动量 60% ＋ 指标 40%，选 4 只，单只 15–30%，目标波动 20%</div>
+      <div>动量 60% ＋ 指标 40%，1/波动加权，单只 15–30%（3 只时放到 40%）</div>
       <div class="hidden" id="ruleFull" style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)">
       <b>综合分</b>：0.6×动量排名 + 0.4×指标排名（都是42只内的百分位）<br>
       <b>动量</b>：(0.3×近3月 + 0.2×近6月 + 0.5×近1月) ÷ 63日年化波动<br>
       <b>指标</b>：通达信主图分（趋势30+资金25+形态20+动量15+风险10，含上涨概率修正）<br>
       <b>否决</b>：价&lt;MA120 或 MA20&lt;MA60 剔除；跨境溢价&gt;5%剔除<br>
       <b>选几只</b>：4只最优（可改5/6）；同层≤2只，两两126日相关&lt;0.9，跌出前8才卖<br>
-      <b>权重</b>：1/波动，单只15%–30%；不满5只的钱进511130<br>
+      <b>权重</b>：1/波动，单只15%–30%；只数≤3 时上限放到40%（否则1/3=33%会顶破30%，逆波动失效）；不满5只的钱进511130<br>
       <b>仓位</b>：目标波动20%，仓位=20%÷近60日组合波动<br>
       <b>行情判断</b>：宽度(价&gt;MA120占比)&lt;15%→普跌，双周且重点是仓位；15–30%→结构性行情，单周；&gt;30%且等权在MA120上方、ER&gt;10%→趋势上行，双周；其余双周<br>
       <b>例外</b>：6只主动ETF（158901/158907/158908/581000/581060/581090）上市不足，不参与打分，单列≤20%仓位持有<br>
@@ -269,15 +269,16 @@ text-align:right;padding:0 7px;font-size:12.5px;color:var(--ink);font-family:inh
   <div class="fld"><label>总资金（元）</label><input id="cfgMoney" type="number" inputmode="numeric" step="1000">
     <div class="hint">只影响金额和份数展示</div></div>
   <div class="fld"><label>持仓只数</label><select id="cfgTop">
-    <option value="4" selected>4只（回测最优，年化最高）</option>
-    <option value="5">5只（更分散，回撤略小）</option>
+    <option value="3">3只（最集中，回撤最浅）</option>
+    <option value="4" selected>4只（默认，夏普最高）</option>
+    <option value="5">5只（更分散，换手更低）</option>
     <option value="6">6只（最稳，收益被摊薄）</option></select>
-    <div class="hint">2020年来：4只20.8%／5只16.6%／6只15.8%</div></div>
+    <div class="hint">2020年来：3只20.6%（回撤-15%）／4只20.2%（-22%）／5只16.7%／6只16.0%</div></div>
   <div class="fld"><label>调仓节奏</label><select id="cfgFreq">
     <option value="2">双周五（默认，摩擦最小）</option>
     <option value="1">每周五（换手翻倍，成本敏感）</option>
     <option value="0.5">每月1日/16日（信号钝化）</option></select>
-    <div class="hint">单周20.8%／双周19.1%，单周回撤浅3.1pp，年佣金约0.29%</div></div>
+    <div class="hint">单周20.2%／双周18.8%，单周回撤浅3.1pp，年佣金约0.29%</div></div>
   <div class="fld"><label>执行时点</label><select id="cfgExec">
     <option value="same">周五尾盘一次完成（回测 21.4%，无空仓）</option>
     <option value="thu_fri">周四早盘卖 + 周五尾盘买（20.9%）</option>
@@ -677,12 +678,14 @@ function pick(met){
 }
 function weights(sel,met){
   if(!sel.length) return {};
+  /* 只数≤3 时 1/n 已超 30%，旧上限会被均分顶破、逆波动失效，放到 40% 才起作用 */
+  const CAP=sel.length<=3?0.40:0.30;
   let w={}; const iv={}; let sum=0;
   sel.forEach(c=>{iv[c]=1/met[c].vol; sum+=iv[c];});
   sel.forEach(c=>w[c]=iv[c]/sum);
   for(let it=0;it<60;it++){
     let over=false, under=false;
-    sel.forEach(c=>{if(w[c]>0.30){w[c]=0.30;over=true} if(w[c]<0.15){w[c]=0.15;under=true}});
+    sel.forEach(c=>{if(w[c]>CAP){w[c]=CAP;over=true} if(w[c]<0.15){w[c]=0.15;under=true}});
     const tot=sel.reduce((a,c)=>a+w[c],0);
     sel.forEach(c=>w[c]/=tot);
     if(!over&&!under) break;
