@@ -2,15 +2,16 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="轮动台">
-<meta name="theme-color" content="#2C3E50">
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport">
+<meta content="yes" name="apple-mobile-web-app-capable">
+<meta content="default" name="apple-mobile-web-app-status-bar-style">
+<meta content="轮动台" name="apple-mobile-web-app-title">
+<meta content="#2C3E50" name="theme-color">
 <title>轮动台 · 48只自选</title>
 <style>
-:root{--ink:#2C3E50;--teal:#5F9E8F;--paper:#F7F4ED;--line:#E4DDD0;--text:#333;--dim:#8A8578;
---red:#C0392B;--green:#1E8449;--amber:#B0846A;--card:#fff}
+:root{--ink:#2C3E50;--teal:#5F9E8F;--teal-d:#3C7A6A;--teal-bg:#EAF3EF;--teal-line:#D6E4DC;
+--paper:#F7F4ED;--line:#E4DDD0;--text:#3A4048;--dim:#88827A;--dim2:#A8A092;
+--red:#C0392B;--green:#1E8449;--amber:#B0846A;--card:#fff;--shadow:0 1px 4px rgba(44,62,80,.06)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;overflow-x:hidden}
 body{background:var(--paper);color:var(--text);font-size:15px;line-height:1.55;
@@ -18,26 +19,63 @@ font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",san
 -webkit-text-size-adjust:100%;padding-bottom:86px}
 .wrap{max-width:560px;margin:0 auto;padding:14px 13px 0}
 header{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:6px}
-h1{font-size:19px;color:var(--ink);font-weight:600;letter-spacing:.3px}
+h1{font-size:20px;color:var(--ink);font-weight:600;letter-spacing:.3px}
 h1 span{font-size:11px;color:var(--dim);font-weight:400;margin-left:6px}
 .meta{font-size:11.5px;color:var(--dim);margin-top:4px;line-height:1.8}
 .meta b{color:var(--ink);font-weight:600}
-#gear{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid var(--line);
-color:var(--dim);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-top:2px}
+#xpBar{flex:0 0 auto;display:flex;align-items:center;gap:8px;margin-top:2px}
+#xpBtn{height:30px;padding:0 11px;border-radius:15px;background:#fff;border:1px solid var(--line);
+color:var(--teal-d);font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;
+display:inline-flex;align-items:center;gap:5px}
+#xpBtn:after{content:'▾';font-size:9px;transition:transform .2s;transform:translateY(1px)}
+#xpBtn.on{background:var(--teal-bg);border-color:var(--teal-line)}
+#xpBtn.on:after{transform:rotate(180deg) translateY(-1px)}
+#gear{width:30px;height:30px;border-radius:50%;background:#fff;border:1px solid var(--line);
+color:var(--dim);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .bar{margin:6px 0 12px}
 .pb{height:3px;background:#E8E2D6;border-radius:2px;overflow:hidden}
 .pb i{display:block;height:100%;width:0;background:var(--teal);transition:width .4s ease}
 .msg{font-size:11.5px;color:var(--dim);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msg.err{color:var(--red);white-space:normal}
 section{margin-bottom:18px}
-h2{font-size:14.5px;color:var(--ink);font-weight:600;border-left:3px solid var(--teal);
+h2{font-size:15px;color:var(--ink);font-weight:600;border-left:3px solid var(--teal);
 padding-left:9px;display:flex;align-items:center;margin-bottom:8px;line-height:1.3}
 h2 em{font-style:normal;font-size:11px;color:var(--dim);font-weight:400;margin-left:8px}
-h2 small{font-size:11px;color:#A8A092;font-weight:400;margin-left:auto;cursor:pointer}
-.tb{background:var(--card);border-radius:9px;box-shadow:0 1px 3px rgba(44,62,80,.06);overflow:hidden}
+h2 small{font-size:11px;color:var(--dim2);font-weight:400;margin-left:auto;cursor:pointer}
+.tb{background:var(--card);border-radius:9px;box-shadow:var(--shadow);overflow:hidden}
+
+/* 智能决策总控卡（浅色协调版，与全站暖纸配色一致） */
+.smart{background:linear-gradient(135deg,#F6FAF8,var(--teal-bg));border:1px solid var(--teal-line);border-left:3px solid var(--teal);border-radius:11px;padding:13px 15px 12px;margin-bottom:12px;box-shadow:0 1px 4px rgba(44,62,80,.06)}
+.smart .sh{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--dim)}
+.smart .sh b{color:var(--teal);font-weight:600;font-size:12px}
+.smart .sg{display:flex;align-items:center;gap:9px;margin-top:9px;flex-wrap:wrap}
+.smart .spill{background:var(--teal);color:#fff;border-radius:5px;padding:3px 12px;font-size:19px;font-weight:700}
+.smart .srole{font-size:16px;font-weight:600;color:var(--ink)}
+.smart .sbtn{margin-left:auto;display:inline-block;background:var(--teal);color:#fff;border-radius:5px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.smart .sbtn:active{opacity:.85}
+.smart .sbtn.done{background:var(--teal-bg);color:var(--teal-d);border:1px solid var(--teal-line)}
+.smart .dcahint{margin-top:9px;font-size:11.5px;color:var(--text);background:#fff;border:1px solid var(--teal-line);border-radius:7px;padding:7px 10px;line-height:1.6}
+.smart .dcahint b{color:var(--teal-d)}
+.smart .dcahint .dt-off{color:var(--dim)}
+.smart .sfold{margin-top:10px}
+.smart .sfold summary{list-style:none;cursor:pointer;font-size:11.5px;color:var(--teal-d);padding-top:9px;border-top:1px dashed var(--line);font-weight:500}
+.smart .sfold summary::-webkit-details-marker{display:none}
+.smart .sfold .sarw{display:inline-block;margin-left:4px;transition:transform .2s;font-size:9px}
+.smart .sfold[open] .sarw{transform:rotate(180deg)}
+.smart .sdesc{font-size:12px;color:var(--text);margin-top:9px;line-height:1.7}
+.smart .sdesc b{color:var(--ink)}
+.smart .sigrow{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.smart .chip{background:#fff;border:1px solid var(--teal-line);border-radius:4px;padding:4px 8px;font-size:10.5px;color:var(--dim)}
+.smart .chip b{color:var(--teal)}
+.smart .snote{font-size:10px;color:var(--dim);margin-top:9px;line-height:1.6}
+.smart .hedge{display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:#F6FAF8;border:1px solid var(--teal-line);border-radius:7px;padding:8px 10px;margin-top:10px;font-size:11.5px;color:var(--text)}
+.smart .hedge b{color:var(--teal)}
+.smart .hedge .hsave{margin-left:auto;background:var(--teal);color:#fff;border-radius:4px;padding:3px 9px;font-size:10.5px;cursor:pointer;white-space:nowrap}
+.smart .hedge .hsave.done{background:var(--teal-bg);color:var(--teal);border:1px solid #CFE2D7}
+@media(max-width:680px){.smart .spill{font-size:17px}.smart .srole{font-size:15px}}
 
 /* 今日动作 */
-.act{background:var(--card);border-radius:11px;padding:16px 15px 14px;box-shadow:0 1px 4px rgba(44,62,80,.07)}
+.act{background:var(--card);border-radius:11px;padding:16px 15px 14px;box-shadow:0 1px 4px var(--shadow)}
 .act .big{font-size:21px;font-weight:600;color:var(--ink);letter-spacing:.5px}
 .act .big.warn{color:var(--amber)}
 .act .sub{font-size:12.5px;color:var(--dim);margin-top:5px;line-height:1.6;text-wrap:pretty}
@@ -51,13 +89,18 @@ h2 small{font-size:11px;color:#A8A092;font-weight:400;margin-left:auto;cursor:po
 #passedBox .fold-tip{padding:8px 10px}
 
 /* 行情判断 */
-.rg{background:var(--card);border-radius:11px;padding:14px 15px 13px;box-shadow:0 1px 4px rgba(44,62,80,.07)}
+.rg-wrap{margin-top:13px}
+.rg{background:var(--card);border-radius:11px;padding:14px 15px 13px;box-shadow:0 1px 4px var(--shadow)}
 .rgtop{display:flex;align-items:center;gap:9px}
-.rgtop b{font-size:17.5px;color:var(--ink);font-weight:600;letter-spacing:.3px}
-.rgtop .adv{font-size:11.5px;padding:2.5px 9px;border-radius:11px;background:#EAF3EF;color:#3C7A6A;font-weight:600;
+.rgtop b{font-size:17px;color:var(--ink);font-weight:600;letter-spacing:.3px}
+.rgtop .adv{font-size:11.5px;padding:2.5px 9px;border-radius:11px;background:var(--teal-bg);color:var(--teal-d);font-weight:600;
 white-space:nowrap}
 .rgtop .adv.dn{background:#FAEDE8;color:#A25640}
 .rg .why{font-size:12px;color:var(--dim);line-height:1.68;margin-top:7px}
+.tmline{margin-top:10px;padding:9px 11px;border-radius:8px;background:var(--teal-bg);color:var(--teal-d);font-size:12px;line-height:1.6}
+.tmline.dn{background:#FAEDE8;color:#A25640}
+.tmline b{font-weight:600}
+.tmline .tmsw{float:right;font-size:11px;opacity:.75}
 .rgl{margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
 .rgr{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);margin-bottom:8px}
 .rgr:last-child{margin-bottom:0}
@@ -66,12 +109,12 @@ white-space:nowrap}
 .rgr .tr i{position:absolute;left:0;top:0;height:100%;border-radius:3px;background:var(--teal);transition:width .5s ease}
 .rgr .tr i.w{background:var(--amber)}
 .rgr .vl{flex:0 0 54px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
-.rgnote{font-size:10.5px;color:#A8A092;line-height:1.65;margin-top:9px;padding-top:8px;border-top:1px dashed var(--line)}
+.rgnote{font-size:10.5px;color:var(--dim2);line-height:1.65;margin-top:9px;padding-top:8px;border-top:1px dashed var(--line)}
 /* 组合 */
 .item{display:flex;align-items:center;padding:11px 13px;border-top:1px solid var(--line)}
 .item:first-child{border-top:none}
 .item .l{flex:1 1 auto;min-width:0;padding-right:8px}
-.nm{font-size:14.5px;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nm{font-size:14px;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sub{font-size:11px;color:var(--dim);margin-top:3px;font-variant-numeric:tabular-nums}
 .item .r{flex:0 0 auto;text-align:right}
 .wt{font-size:15px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -93,11 +136,15 @@ border-radius:3px;padding:0 4px;margin-left:5px;vertical-align:1.5px;font-style:
 .pct{flex:0 0 52px;text-align:right;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
 .dim{color:var(--dim);font-size:11px}
 .hidden{display:none}
+/* 解释性说明：默认折叠，仅结论常显；点顶部「展开全部说明」统一切换 */
+.xp-detail{display:none}
+body.xp-on .xp-detail{display:block}
+body.xp-on .xp-detail.xp-flex{display:flex}
 .fold-tip{font-size:11px;color:var(--dim);text-align:center;padding:9px}
-.foldbtn{display:inline-flex;align-items:center;gap:3px;background:none;border:none;padding:7px 0 1px;
-font-size:11px;color:var(--teal);font-family:inherit;cursor:pointer;letter-spacing:.2px}
-.foldbtn:after{content:'⌄';font-size:11px;transform:translateY(-1px)}
-.foldbtn.on:after{content:'⌃'}
+.foldbtn{display:inline-flex;align-items:center;gap:4px;background:none;border:none;padding:7px 0 1px;
+font-size:11.5px;color:var(--teal-d);font-family:inherit;cursor:pointer;letter-spacing:.2px;font-weight:500}
+.foldbtn:after{content:'▾';font-size:9px;transition:transform .2s;transform:translateY(1px)}
+.foldbtn.on:after{transform:rotate(180deg) translateY(-1px)}
 
 /* 提示条 */
 .note{background:#FBF7EE;border:1px solid var(--line);border-radius:8px;padding:10px 12px;
@@ -126,11 +173,14 @@ border-radius:16px 16px 0 0;transform:translateY(102%);transition:transform .26s
 .dh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .dh b{font-size:16px;color:var(--ink)}
 .dh span{font-size:20px;color:var(--dim);cursor:pointer;line-height:1}
+.fldgrp{background:#FBF9F4;border:1px solid var(--line);border-radius:10px;padding:11px 11px 2px;margin-bottom:12px}
+.fldgrp .grp-t{font-size:11px;color:var(--teal);font-weight:600;margin-bottom:9px;letter-spacing:.3px}
+.fldgrp .fld{margin-bottom:10px}
 .fld{margin-bottom:12px}
 .fld label{display:block;font-size:11.5px;color:var(--dim);margin-bottom:5px}
 .fld input,.fld select{width:100%;height:40px;border:1px solid var(--line);border-radius:8px;
 background:#fff;padding:0 11px;font-size:14px;color:var(--ink);font-family:inherit}
-.fld .hint{font-size:10.5px;color:#A8A092;margin-top:4px;line-height:1.6}
+.fld .hint{font-size:10.5px;color:var(--dim2);margin-top:4px;line-height:1.6}
 .sw{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:1px solid var(--line);font-size:13.5px}
 .sw:first-of-type{border-top:none}
 .mini{font-size:12px;color:var(--teal);cursor:pointer}
@@ -143,7 +193,7 @@ table.plain td{padding:5px 4px;border-bottom:1px solid #F1EBDF;font-variant-nume
 .lk:active{color:var(--teal);border-bottom-color:var(--teal)}
 
 /* 实盘账户 */
-.pf{background:var(--card);border-radius:11px;padding:14px 15px 12px;box-shadow:0 1px 4px rgba(44,62,80,.07)}
+.pf{background:var(--card);border-radius:11px;padding:14px 15px 12px;box-shadow:0 1px 4px var(--shadow)}
 .pf .empty{font-size:12.5px;color:var(--dim);line-height:1.75}
 .pf .empty b{color:var(--ink)}
 .pftop{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
@@ -155,11 +205,11 @@ table.plain td{padding:5px 4px;border-bottom:1px solid #F1EBDF;font-variant-nume
 .pfw>div{text-align:center;min-width:0}
 .pfw b{display:block;font-size:12.5px;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
 .pfw span{display:block;font-size:9.5px;color:var(--dim);margin-top:3px;white-space:nowrap;transform:scale(.96)}
-.pfsum{font-size:10.5px;color:#A8A092;line-height:1.65;margin-top:10px;padding-top:9px;border-top:1px dashed var(--line)}
-.pfhd{display:flex;align-items:center;justify-content:space-between;padding:11px 13px 4px;font-size:10.5px;color:#A8A092}
+.pfsum{font-size:10.5px;color:var(--dim2);line-height:1.65;margin-top:10px;padding-top:9px;border-top:1px dashed var(--line)}
+.pfhd{display:flex;align-items:center;justify-content:space-between;padding:11px 13px 4px;font-size:10.5px;color:var(--dim2)}
 
 /* 实盘编辑 */
-.ehd{display:grid;grid-template-columns:1fr 74px 74px 20px;gap:6px;font-size:10px;color:#A8A092;padding:2px 0 5px}
+.ehd{display:grid;grid-template-columns:1fr 74px 74px 20px;gap:6px;font-size:10px;color:var(--dim2);padding:2px 0 5px}
 .ahd{grid-template-columns:1fr 64px 64px 18px;gap:5px}
 .ehd span:nth-child(2),.ehd span:nth-child(3){text-align:right}
 .erow{display:grid;grid-template-columns:1fr 74px 74px 20px;gap:6px;align-items:center;
@@ -196,90 +246,137 @@ padding:0 6px;font-size:12px;color:var(--ink);font-family:inherit;font-variant-n
 .arow input{text-align:right}
 .arow .del{color:#C3BBAE;font-size:16px;text-align:center;cursor:pointer;line-height:1}
 .cmp-tb th:not(:first-child),.cmp-tb td:not(:first-child){text-align:right}
+/* 纳指定投信号卡 */
+.dca{background:linear-gradient(135deg,#EAF3F0,#F3F7F5);border:1px solid var(--teal-line);border-radius:11px;padding:14px 15px}
+.dca .dh{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:var(--ink)}
+.dca .dh em{font-style:normal;font-size:11px;color:var(--dim);font-weight:400}
+.dca .amt{font-size:26px;font-weight:600;color:#1E8449;font-variant-numeric:tabular-nums;margin:8px 0 2px}
+.dca .amt.low{color:#C0392B}
+.dca .sig{font-size:11.5px;color:var(--dim);line-height:1.6}
+.dca .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding-top:11px;border-top:1px solid var(--teal-line)}
+.dca .grid div{text-align:center}
+.dca .grid b{display:block;font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+.dca .grid span{font-size:10px;color:var(--dim)}
+.dca .plans{margin-top:11px;padding-top:10px;border-top:1px dashed var(--teal-line);font-size:11px;line-height:1.85;color:#4a5a55}
+.dca .plans .on{color:#1E8449;font-weight:600}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
-      <h1>轮动台 <span id="poolMeta">50只自选 · 动量+指标双打分</span></h1>
-      <div class="meta" id="meta">数据准备中…</div>
+      <h1><!--pnid:YktFOcwStfwMWuaslj88hI-->轮动台 <span id="poolMeta"><!--pnid:dhNZaykBAzG03hHqATe8WV-->50只自选 · 动量+指标双打分</span></h1>
+      <div class="meta" id="meta"><!--pnid:XVFleFSz4hja3aqEn4TyfW-->数据准备中…</div>
     </div>
-    <div id="gear">⚙</div>
+    <div id="xpBar"><button id="xpBtn" type="button"><!--pnid:HOJUTKzVt5oXf45hQ0Pyv2-->说明 ▾</button><span id="gear"><!--pnid:MZhnCiQmWJAgNpko1wcnKA-->⚙</span></div>
   </header>
-  <div class="bar"><div class="pb"><i id="pbi"></i></div><div class="msg" id="pmsg">正在连接行情…</div></div>
+  <div class="bar"><div class="pb"><i id="pbi"></i></div><div class="msg" id="pmsg"><!--pnid:RwgBEOqx4Zy5AWXcjwZNPj-->正在连接行情…</div></div>
+
+  <section id="smartSec">
+    <div class="smart" id="smartCard">
+      <div class="sh"><span><!--pnid:z7s50Ph9MLI6pfvDHFCCgT-->智能决策 · 自动选档</span><b id="smartTag"><!--pnid:GaL4AUDEx6kwOcOA43e8m5-->基于当前行情</b></div>
+      <div class="sg"><span class="spill" id="smartPlan"><!--pnid:zBEfOaCdnsvuKJh9fB2yUR-->—</span><span class="srole" id="smartRole"><!--pnid:w1HiI8MCaWomvoxhRKB6P0-->计算中…</span><span class="sbtn" id="smartApply"><!--pnid:jnmMagTNi65EodQRmSXazb-->采纳建议 ›</span></div>
+      <div class="dcahint" id="dcaHint"><!--pnid:1BsSWNREE3nPIQlBpIGfaD--><!--pnid:dcaHint01Qw8Er--><!--pnid:6LzImQica8ASzBtZP8WyG1-->—</div>
+      <details class="sfold" id="smartFold">
+        <summary><!--pnid:zM6an54l6LE2FVLD5wtDcn--><!--pnid:sfSumm01Bx3Kp--><!--pnid:lxenuUw6Z85i4F6lUMUJqO-->研判理由<span class="sarw"><!--pnid:upD7s85qUsIEO7jFe6xYWs-->▾</span></summary>
+        <div class="sdesc" id="smartDesc"><!--pnid:Yof7SzbnNJLFp7C4lRpz3U-->综合 A股择时信号 与 纳指MA200 位置，自动建议当前该走哪一档。</div>
+        <div class="sigrow" id="smartSig"></div>
+        <div class="hedge" id="hedgeAdvice"><span id="hedgeTxt"><!--pnid:9bSs0MIKPkk29bGxEGEut6-->避险模式：计算中…</span><span class="hsave" id="hedgeSave"><!--pnid:OjxeOu7qZx7JZ0yk88GYZM-->采纳 ›</span></div>
+        <div class="hedge" id="bullAdvice"><span id="bullTxt"><!--pnid:wfFnZyKrZEs6f653vNSzgK-->牛市增强：计算中…</span><span class="hsave" id="bullSave"><!--pnid:DAPYYaICgJUZQpzA8RcmAp-->采纳 ›</span></div>
+        <div class="snote"><!--pnid:k0SfVDJQ7F6j1qNeKXznpu-->回测（2016年以来，初始1万+月投3000）：全定投收益最高19.5%但回撤-27.8%；自动选档牺牲约3pp收益，换回撤减半至-13.7%、夏普1.51→2.25。自动选档的价值在控回撤，不在多赚钱。</div>
+      </details>
+    </div>
+    <div class="rg-wrap">
+      <h2><!--pnid:AqZuVOmfEAxDzpc26NF55M-->行情判断 <em class="lk" id="rgMeta" title="点击切换策略"></em><small id="rgApply"><!--pnid:X5RUIr0SMZlGlWXTFB7ESY-->采纳 ›</small></h2>
+      <div class="rg">
+        <div class="rgtop"><b id="rgName"><!--pnid:QqXOX7bXFuDHEOPLvcaUWl-->—</b><span class="adv" id="rgAdv"><!--pnid:1WtNv846mE7UFgMrT46GCL-->—</span></div>
+        <div class="why xp-detail" id="rgWhy"><!--pnid:jSqgE3gers9BVKydrlzrKh-->—</div>
+        <div class="tmline" id="tmLine"><!--pnid:PZjSmvXEbvixfgENbNJuZk-->—</div>
+        <button class="foldbtn" id="rgTog"><!--pnid:FdqsNljJ1ay96eqkM9oZC2-->看依据</button>
+        <div class="hidden" id="rgFold">
+          <div class="rgl" id="rgBars"></div>
+          <div class="rgnote" id="rgNote"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section>
     <div class="act">
-      <div class="big" id="actTitle">—</div>
-      <div class="sub" id="actSub">—</div>
+      <div class="big" id="actTitle"><!--pnid:gDnsRG9A4upd7NFrcw7ZyD-->—</div>
+      <button class="foldbtn actfold" id="actTog"><!--pnid:8TCFIdDuUMLojOEDakkPXU--><!--pnid:actTog01Kp8Vq3Xn--><!--pnid:8ufhk8BjxQILA4VhO2PZdY-->看说明</button>
+      <div class="sub hidden" id="actSub"><!--pnid:hBBH3mTNDX0XZaJdqUJmVW-->—</div>
       <div class="row3">
-        <div><a id="lnkBreadth" class="lk" href="#"><b id="mBreadth">—</b></a><span>达标标的 ›</span></div>
-        <div><b id="mVol">—</b><span>组合波动</span></div>
-        <div><b id="mPos">—</b><span>建议仓位</span></div>
+        <div><a class="lk" href="#" id="lnkBreadth"><b id="mBreadth"><!--pnid:Gew6COVww3lLkQGKH1qABd-->—</b></a><span><!--pnid:Mln8Eby7kY4qHcMbBepg9l-->达标标的 ›</span></div>
+        <div><b id="mVol"><!--pnid:hN0BoKmvz6eyR1gKdvL0wZ-->—</b><span><!--pnid:f5TeCJgUmGi7BRg2awSlI9-->组合波动</span></div>
+        <div><b id="mPos"><!--pnid:hazWIXs7BOFyu70XiBMgla-->—</b><span><!--pnid:wEB2qg8NOSdhBjweQRqt9c-->建议仓位</span></div>
       </div>
       <div class="tb list hidden" id="passedBox"></div>
     </div>
   </section>
 
   <section>
-    <h2>行情判断 <em id="rgMeta"></em><small id="rgApply">采纳 ›</small></h2>
-    <div class="rg">
-      <div class="rgtop"><b id="rgName">—</b><span class="adv" id="rgAdv">—</span></div>
-      <div class="why" id="rgWhy">—</div>
-      <button class="foldbtn" id="rgTog">看依据</button>
-      <div class="hidden" id="rgFold">
-        <div class="rgl" id="rgBars"></div>
-        <div class="rgnote" id="rgNote"></div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>建议组合 <em id="comboMeta"></em><small id="btnRank">全部排名 ›</small></h2>
+    <h2><!--pnid:Zq2hpVvDf03xOPN0NVSxR7-->建议组合 <em id="comboMeta"></em><small id="btnRank"><!--pnid:l3wYiDGX3CdDHQemAxVgLW-->全部排名 ›</small></h2>
     <div class="tb" id="combo"></div>
   </section>
 
   <section id="secAct">
-    <h2>操作清单 <em id="actMeta"></em></h2>
+    <h2><!--pnid:ZVZh8RriIjQsP7w9I6yZvt-->操作清单 <em id="actMeta"></em></h2>
     <div class="tb" id="orders"></div>
   </section>
 
+  <section id="dcaSec" style="display:none">
+    <div class="dca">
+      <div class="dh"><span><!--pnid:vuJlR3xQDD5KtZS1w4fiNL-->纳指定投信号 <em><!--pnid:EfuUribjycACkCMi0s7u7m-->· 513100 国泰纳指ETF</em></span><em id="dcaPlanTag"></em></div>
+      <div class="amt" id="dcaAmt"><!--pnid:mERcd1o8gVDyqQD78jLupe-->—</div>
+      <div class="sig" id="dcaSig"><!--pnid:akCRhntIsU96uJiRni50v3-->计算中…</div>
+      <div class="grid">
+        <div><b id="dcaPx"><!--pnid:dDH2n7BRuOH4gCawDOeJQq-->—</b><span><!--pnid:2zdLQih18ePE06Sh4IlIfW-->纳指现价</span></div>
+        <div><b id="dcaMa"><!--pnid:4KkrSSlhVlWMccAQwRJ9Hv-->—</b><span><!--pnid:VZC1jQbZWb6DCs90aNSQjD-->MA200</span></div>
+        <div><b id="dcaPos"><!--pnid:215BGJwxsvIXEATDUPX8wz-->—</b><span><!--pnid:iWY6D34heJuVbqjZfsQVzx-->位置</span></div>
+      </div>
+      <div class="plans xp-detail" id="dcaPlans"></div>
+    </div>
+  </section>
+
   <section>
-    <h2>持仓体检 <em>相对上次记录</em></h2>
+    <h2><!--pnid:UWTIPkeDI2G5Wlm17GvdJV-->持仓体检 <em><!--pnid:odkQoFCH7R5GoLK4BffVyx-->相对上次记录</em></h2>
     <div class="tb" id="health"></div>
   </section>
 
   <section id="secPf">
-    <h2>实盘账户 <em id="pfMeta"></em><small id="pfEdit">编辑 ›</small></h2>
+    <h2><!--pnid:i2Dsmq6ai4sVsKxixPcxE8-->实盘账户 <em id="pfMeta"></em><small id="pfEdit"><!--pnid:qSlUYrzWoeUsoRka8NEyAu-->编辑 ›</small></h2>
     <div id="pfBox"></div>
   </section>
 
-  <section id="secRank" class="hidden">
-    <h2>全池排名 <em id="rankMeta">44只 · 按综合分</em><small id="btnRank2">收起 ‹</small></h2>
+  <section class="hidden" id="secRank">
+    <h2><!--pnid:J0UVFryO1xzGOAyN1A6CJ2-->全池排名 <em id="rankMeta"><!--pnid:74fdfGRQPzvfo72MebZc3T-->47只 · 按综合分</em><small id="btnRank2"><!--pnid:V9veKwaDWcI4f1ixRhMzVa-->收起 ‹</small></h2>
     <div class="tb list" id="rank"></div>
-    <div class="fold-tip">条=综合分（灰为负）· 右侧为当日涨跌，不是买入信号 · ✕ 表示趋势或溢价不达标</div>
+    <div class="fold-tip xp-detail"><!--pnid:FDGUeAass1D28vCWlICdv6-->条=综合分（灰为负）· 右侧为当日涨跌，不是买入信号 · ✕ 表示趋势或溢价不达标</div>
   </section>
 
   <section>
-    <h2>规则速查<small id="ruleTog">展开 ›</small></h2>
+    <h2><!--pnid:JqpA28a9XNzwkWYBtrRIw1-->规则速查<small class="foldbtn" id="ruleTog"><!--pnid:hcCEqul9qMagT31MmexsAk-->展开</small></h2>
     <div class="note">
-      <div>动量 60% ＋ 指标 40%，1/波动加权，单只 15–30%（3 只时放到 40%）</div>
-      <div class="hidden" id="ruleFull" style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)">
-      <b>综合分</b>：0.6×动量排名 + 0.4×指标排名（都是42只内的百分位）<br>
-      <b>动量</b>：(0.3×近3月 + 0.2×近6月 + 0.5×近1月) ÷ 63日年化波动<br>
-      <b>指标</b>：通达信主图分（趋势30+资金25+形态20+动量15+风险10，含上涨概率修正）<br>
-      <b>否决</b>：价&lt;MA120 或 MA20&lt;MA60 剔除；跨境溢价&gt;8%剔除（涨停ETF不因涨幅被排除）<br>
-      <b>选几只</b>：4只最优（可改5/6）；同层≤2只，两两126日相关&lt;0.9，跌出前8才卖<br>
-      <b>权重</b>：1/波动，单只15%–30%；只数≤3 时上限放到40%（否则1/3=33%会顶破30%，逆波动失效）；不满5只的钱进511130<br>
-      <b>仓位</b>：目标波动20%，仓位=20%÷近60日组合波动<br>
-      <b>行情判断</b>：宽度(价&gt;MA120占比)&lt;15%→普跌，双周且重点是仓位；15–30%→结构性行情，单周；&gt;30%且等权在MA120上方、ER&gt;10%→趋势上行，双周；其余双周<br>
-      <b>例外</b>：6只主动ETF（158901/158907/158908/581000/581060/581090）上市不足，不参与打分，单列≤20%仓位持有<br>
-      <b>实盘</b>：右上「编辑」可从建议组合一键重建/追加，也能手填份额与成本价；区间收益优先用账户每日快照，快照不足时按当前份额回溯历史价<br>
-      <b>调仓档案</b>：底部「档案」看最近半年推荐/实际/对照；调仓日自动留档推荐，实际执行手工录入，按日期自动配对<br>
-      <b>排行榜</b>：按综合分（动量60%＋指标40%）排序，右侧百分比是当日涨跌；点「达标标的」可看通过趋势/溢价过滤的具体品种，点名称跳行情<br>
-      <b>行情</b>：点任意基金名称直接跳行情页（设置里可换腾讯/东方财富/天天基金/集思录）<br>
-      <b>提示</b>：指标分是“当日强度”，盘中会跳动，收盘前14:50再看一次更稳
+      <div><!--pnid:wzPUMk3N2qcDZtk42Mrkhs-->动量+指标双打分（默认92%/8%），1/波动加权，单只 15–30%（3 只时放到 40%）</div>
+      <div class="hidden" id="ruleFull" style="margin-top:9px; padding-top:9px; border-top:1px dashed var(--line)">
+      <b><!--pnid:bQ4ymwDLsyURso7g0gK75p-->综合分</b><!--pnid:gon40lcwAuxp8TeY7psiga-->：动量权重×动量排名 + 指标权重×指标排名（池内百分位，默认92%/8%，可在设置里调整）<br>
+      <b><!--pnid:vcSV1iSWWPCcM0fRiqoBsL-->动量</b><!--pnid:MLwjkSVDN81yNWv2An2VZ5-->：(0.3×近3月 + 0.2×近6月 + 0.5×近1月) ÷ 63日年化波动<br>
+      <b><!--pnid:kXRoK3MJZiddVjVGCkhmHo-->指标</b><!--pnid:znnTxtPjvuVfD0VsclJpbZ-->：通达信主图分（趋势30+资金25+形态20+动量15+风险10，含上涨概率修正）<br>
+      <b><!--pnid:WJfkuqgc9Mn4pCawyjUosm-->否决</b><!--pnid:zkrh0TYvKEj89pGybyosoW-->：价&lt;MA120 或 MA20&lt;MA60 剔除；跨境溢价&gt;8%剔除（涨停ETF不因涨幅被排除）<br>
+      <b><!--pnid:MKECoTWa0Gmb1urAhSoHQN-->选几只</b><!--pnid:19YQSjALfpg8K3DldiklPK-->：基础3只（可改4/5）；牛市增强开启且沪深300动量为正时自动加到4只+纯动量；同层≤2只，两两126日相关&lt;0.9，跌出前8才卖<br>
+      <b><!--pnid:FqoaKdm1T274RQ54ih6BiW-->权重</b><!--pnid:UV8EC2tIJGdn29w8Vr9FYp-->：1/波动，单只15%–30%；只数≤3 时上限放到40%（否则1/3=33%会顶破30%，逆波动失效）；不满5只的钱进511130<br>
+      <b><!--pnid:dBgyO0bDUmUaRQXcoetxxa-->仓位</b><!--pnid:3rUrNTR2iBFUsdqmySPcjM-->：目标波动25%（进取默认），仓位=25%÷近60日组合波动<br>
+      <b><!--pnid:fz7BiNJwPU4Aka30UEygNT-->行情判断</b><!--pnid:cLvvYvt2jfzq8hQcKidkXd-->：宽度(价&gt;MA120占比)&lt;15%→普跌，双周且重点是仓位；15–30%→结构性行情，单周；&gt;30%且等权在MA120上方、ER&gt;10%→趋势上行，双周；其余双周<br>
+      <b><!--pnid:QF8afyspQMzgIGrlsWn2bY-->策略模式</b><!--pnid:bvJnsyVm5Hw4qqncQf4TeT-->：设置里可切换。①趋势过滤（原策略）：年化9.9%、回撤-37.4%、夏普0.53；②双动量持债+动态单双周(进取默认)：沪深300近180日为负→持债避险（默认全仓511130，可在设置里切换"避险持仓模式"为智能/债+黄金），为正→正常轮动，宽度15–30%单周、其余双周，2016年来年化14.8%、回撤-12.4%、夏普1.17（含25%波动+92%动量）；③三档择时：负且境外强→境外（近6月正、进前3），否则持债，保留作对照。择时窗口可在设置里调（180日），是风控不是预测<br>
+      <b><!--pnid:aHzvrbJjCpegwlCZLfMBwB-->纳指定投</b><!--pnid:Td78udDlpFSOrKw7OsMOjG-->：设置里可开三档（默认关）。月的3000元基数、MA200上方投基准额/下方加倍，标的513100。进取档全定投IRR19.5%（回撤-27.8%）、平衡档各半IRR约17-18%、稳健档全轮动IRR15.3%（回撤-10%）。这是独立于轮动的现金流方案，仅给信号提示、不改动轮动买卖<br>
+      <b><!--pnid:HXPewzngwErbD2EVIJqsUZ-->智能决策</b><!--pnid:K3bVJu4i2xk1o144ngNvTT-->：页首总控卡按"沪深300近180日动量为负→稳健；为正且纳指破MA200→进取加倍；为正且纳指站上MA200→平衡各半"自动建议档位。回测（2016年以来）牺牲约3pp收益换回撤-27.8%→-13.7%、夏普1.51→2.25，6个起始年份夏普全面占优。价值在控回撤、不在多赚钱；点"采纳建议"会自动切到推荐档<br>
+      <b><!--pnid:xSWwseQUOcQlr90oIwqvpJ-->例外</b><!--pnid:c5xdUjB2lEIlpmupKWKriV-->：6只主动ETF（158901/158907/158908/581000/581060/581090）上市不足，不参与打分，单列≤20%仓位持有<br>
+      <b><!--pnid:3REzJpoi4guVS5SsWiyZyg-->实盘</b><!--pnid:usWOpuvHnhcuJUElZTQuKq-->：右上「编辑」可从建议组合一键重建/追加，也能手填份额与成本价；区间收益优先用账户每日快照，快照不足时按当前份额回溯历史价<br>
+      <b><!--pnid:Dm5QNxlBg0SkRXocseE7sb-->调仓档案</b><!--pnid:1s524Dy9H8EsgbsQZynTmh-->：底部「档案」看最近半年推荐/实际/对照；调仓日自动留档推荐，实际执行手工录入，按日期自动配对<br>
+      <b><!--pnid:abXVxBu9hY4KDHTnT8h87v-->排行榜</b><!--pnid:FUcqEuN5GpLNacg1UqItbZ-->：按综合分排序，右侧百分比是当日涨跌；点「达标标的」可看通过趋势/溢价过滤的具体品种，点名称跳行情<br>
+      <b><!--pnid:j9YBF3uLu8OtBAj7m85hqn-->行情</b><!--pnid:vNvH7Vt9QKcnWMgWlmI3n4-->：点任意基金名称直接跳行情页（设置里可换腾讯/东方财富/天天基金/集思录）<br>
+      <b><!--pnid:iJgIqx6HBABkkvMgZ4hnu3-->提示</b><!--pnid:f1BlWyI9MitYlnAo0nxPDs-->：指标分是“当日强度”，盘中会跳动，收盘前14:50再看一次更稳
       </div>
     </div>
   </section>
@@ -290,73 +387,115 @@ padding:0 6px;font-size:12px;color:var(--ink);font-family:inherit;font-variant-n
 </div>
 
 <div class="bottombar"><div class="bb">
-  <button class="btn s" id="btnRefresh">刷新</button>
-  <button class="btn s" id="btnPf">实盘</button>
-  <button class="btn p" id="btnHis">调仓档案</button>
+  <button class="btn s" id="btnRefresh"><!--pnid:zpcWlZ4FcFGQQv61VbwRK0-->刷新</button>
+  <button class="btn s" id="btnPf"><!--pnid:X983lZquAsThbbKf2WjAJG-->实盘</button>
+  <button class="btn p" id="btnHis"><!--pnid:tXDMiJ37d9wO8p5tD9r6d6-->调仓档案</button>
 </div></div>
 
 <div class="mask" id="mask"></div>
 <div class="drawer" id="drawer"><div class="dw">
-  <div class="dh"><b>设置</b><span id="dwClose">×</span></div>
-  <div class="fld"><label>总资金（元）</label><input id="cfgMoney" type="number" inputmode="numeric" step="1000">
-    <div class="hint">只影响金额和份数展示</div></div>
-  <div class="fld"><label>持仓只数</label><select id="cfgTop">
-    <option value="3">3只（最集中，回撤最浅）</option>
-    <option value="4" selected>4只（默认，夏普最高）</option>
-    <option value="5">5只（更分散，换手更低）</option>
-    <option value="6">6只（最稳，收益被摊薄）</option></select>
-    <div class="hint">2020年来：3只20.6%（回撤-15%）／4只20.2%（-22%）／5只16.7%／6只16.0%</div></div>
-  <div class="fld"><label>调仓节奏</label><select id="cfgFreq">
-    <option value="2">双周五（默认，摩擦最小）</option>
-    <option value="1">每周五（换手翻倍，成本敏感）</option>
-    <option value="0.5">每月1日/16日（信号钝化）</option></select>
-    <div class="hint">单周20.2%／双周18.8%，单周回撤浅3.1pp，年佣金约0.29%</div></div>
-  <div class="fld"><label>执行时点</label><select id="cfgExec">
-    <option value="same">周五尾盘一次完成（回测 21.4%，无空仓）</option>
-    <option value="thu_fri">周四早盘卖 + 周五尾盘买（20.9%）</option>
-    <option value="wed_fri">周三早盘卖 + 周五尾盘买（18.0%）</option>
-    <option value="mon_thu">周一早盘卖 + 周四尾盘买（12.9%）</option></select>
-    <div class="hint">买卖隔得越远，空仓越久；A股收益主要在日内</div></div>
-  <div class="fld"><label>目标波动</label><select id="cfgVol">
-    <option value="0.15">15%（保守，回撤更小）</option>
-    <option value="0.20" selected>20%（默认）</option>
-    <option value="0.25">25%（进攻）</option>
-    <option value="0">不控制（满仓）</option></select>
-    <div class="hint">波动高于目标就按比例减仓，钱进国债</div></div>
-  <div class="fld"><label>点基金名称跳到哪个行情</label><select id="cfgSite">
-    <option value="qq">腾讯行情 gu.qq.com</option>
-    <option value="em">东方财富 quote.eastmoney.com</option>
-    <option value="tt">天天基金 fund.eastmoney.com</option>
-    <option value="jsl">集思录（看溢价/折价）</option></select>
-    <div class="hint">集思录适合查溢价，需登录</div></div>
-  <div class="fld"><label>跨境溢价参考（%，按代码，一行一个）</label>
-    <textarea id="cfgPrem" style="width:100%;height:88px;border:1px solid var(--line);border-radius:8px;
-    padding:8px 10px;font-size:12px;font-family:ui-monospace,monospace;color:var(--ink);background:#fff"></textarea>
-    <div class="hint">内置 11-27 快照，超 8% 剔除</div></div>
-  <div class="sw"><span>调仓日自动留档推荐</span><span class="mini" id="btnAutoRec">开</span></div>
-  <div class="sw"><span>持仓记录</span><span class="mini" id="btnReset">清空</span></div>
-  <div class="sw"><span>行情缓存</span><span class="mini" id="btnClear">清除</span></div>
-  <div class="sw"><span>持仓与设置</span><span class="mini" id="btnExport">导出</span></div>
-  <div class="sw"><span>导入备份</span><span class="mini" id="btnImport">选择文件</span></div>
-  <input type="file" id="fileImp" accept="application/json" style="display:none">
-  <div style="margin-top:16px" class="note">
+  <div class="dh"><b><!--pnid:9q4aQpVkIvKXY8bBBXKxw9-->设置</b><span id="dwClose"><!--pnid:nZKKbF5oTZnbNR5StjdaZW-->×</span></div>
+  <div class="fld"><label><!--pnid:GjsPtsuMifyQJqgnY2tDKd-->总资金（元）</label><input id="cfgMoney" inputmode="numeric" step="1000" type="number">
+    <div class="hint"><!--pnid:YLh2kxylDdgQavDqjRfZm6-->只影响金额和份数展示</div></div>
+  <div class="fldgrp">
+    <div class="grp-t"><!--pnid:SF3zQ9f07ESZcHcVhMqVqA-->持仓只数 / 牛市增强</div>
+    <div class="fld"><label><!--pnid:McVtw4KzaFtMACBMbSAxVi-->基础持仓只数（熊市 / 增强关闭时生效）</label><select id="cfgTop">
+      <option selected value="3"><!--pnid:yEEbNdjdGtzwjpKalzUoFP-->3只（最集中，回撤最浅）</option>
+      <option value="4"><!--pnid:tfioYtqbyoFAKvc4i8YNur-->4只（夏普最高）</option>
+      <option value="5"><!--pnid:L6bMjRW2UQmMFmUMXKBVIF-->5只（更分散，换手更低）</option></select>
+      <div class="hint"><!--pnid:X0x1EMEa4sm0pz3pIvp9zW-->2020年来：3只20.6%（回撤-15%）／4只20.2%（-22%）／5只16.7%</div></div>
+    <div class="fld" id="fldBullBoost"><label><!--pnid:VFIQzazU9YZSTtxC4UUwZX-->牛市增强（动量为正时自动加到4只+纯动量）</label><select id="cfgBullBoost">
+      <option selected value="1"><!--pnid:IKCWi9wvR9MAHG9eRsQGLE-->开启（推荐）· 沪深300动量为正时自动切4只+100%纯动量</option>
+      <option value="0"><!--pnid:wdp0SyHo00b0QcD61lMT6Y-->关闭 · 始终按上方基础只数与打分权重执行</option></select>
+      <div class="hint"><!--pnid:csewRVviXQaBLP5fWhJfOy-->回测2016年以来：年化15.87%→16.34%、夏普1.26→1.33、回撤-12.4%→-12.0%；牛市年份2025 +32.8%→+44.4%、2019 +13.9%→+17.3%。代价：2020少赚12pp、2024少赚2.4pp。熊市自动维持基础配置，不额外放大风险。</div></div>
+    <div class="fld" id="fldMa20Risk"><label><!--pnid:O4WhGxl07RdN0RL5EL1jSv-->大盘MA20风控（沪深300跌破MA20时仓位减半，站回恢复）</label><select id="cfgMa20Risk">
+      <option selected value="1"><!--pnid:WDEbqQ2UVS3nm1kdYZnJq7-->开启（推荐）· 180日择时偏慢，MA20提前3~4周逃顶</option>
+      <option value="0"><!--pnid:91736KpLpczaYh5FHwVM3S-->关闭 · 完全按180日择时与目标波动定仓</option></select>
+      <div class="hint"><!--pnid:fymQv74WsHWKsjnKNqKnyj-->回测：2026收益 1.6%→9.0%；长期回撤2016起 -11.9%→-8.6%、2020起 -13.0%→-6.2%、2023起 -10.5%→-5.1%，夏普/Calmar全面改善。代价：年化略降（2016起16.94%→16.12%），反弹初期可能踏空一小段；避险期不重复降仓。</div></div>
+  </div>
+  <div class="fld"><label><!--pnid:o2BD4JAmXBh7duUbzMoxoE-->智能决策 · 自动选档</label><select id="cfgAutoPlan">
+    <option value="1"><!--pnid:POX4VCx7yWpPaYZbClllQW-->开启（推荐）· 按行情自动建议档位</option>
+    <option value="0"><!--pnid:GyMT6C47O2b6D0USMpvCEU-->关闭 · 不显示决策卡</option></select>
+    <div class="hint"><!--pnid:QmShnx5D1Q6ZuZENo5j66N-->综合沪深300择时+纳指MA200，自动建议进取/平衡/稳健档。回测：回撤-27.8%→-13.7%、夏普1.51→2.25，牺牲约3pp收益换更低波动。</div></div>
+  <div class="fld"><label><!--pnid:ox5gDfb8wisyWxgg7CN5Xa-->纳指定投方案</label><select id="cfgDcaPlan">
+    <option value="smart40"><!--pnid:SzAqHZESMLnxk7S4whRwIg-->智能40% · 自动（推荐｜IRR 15.75%／回撤-9%／胜率82%）</option>
+    <option value="off"><!--pnid:Ck2sAMtDpMP23eZIH7z3tP-->不启用（只看轮动）</option>
+    <option value="agg"><!--pnid:uyV7gP4cvfN8Z6loQ62jLf-->进取档 · 全定投纳指（IRR 19.5%／回撤-27.8%）</option>
+    <option value="bal"><!--pnid:QAbXIyLGE367379vrzO04F-->平衡档 · 轮动各半（IRR 17-18%／回撤约-18%）</option>
+    <option value="con"><!--pnid:LbcmKj1oBnmzOGZybelrVW-->稳健档 · 全轮动（IRR 15.3%／回撤-10%）</option></select>
+    <div class="hint"><!--pnid:ezNbJGWHiqJcoIbWTHPDUa-->智能40%（推荐）：A股弱→不投、纳指MA200下→40%(¥1200)、上→20%(¥600)，系统自动执行。固定档月投3000基数：进取档上3000/下6000；平衡各半；稳健不定投。</div></div>
+  <div class="fld"><label><!--pnid:E29skKhEQsEdk7FaMXpP4P-->打分权重</label><select id="cfgMomW">
+    <option value="0.9"><!--pnid:45oYfYEnAVVCBkT3yZABbw-->动量90% + 指标10%（稳健，年化23.3%）</option>
+    <option value="0.6"><!--pnid:nH5jRv8sKp2wM4tQe7Xa1D-->动量60% + 指标40%（更看重趋势与资金，回撤更小）</option>
+    <option selected value="0.92"><!--pnid:xTlJ41Ytxf3RE3Ds0byu1y-->动量92% + 指标8%（进取默认，年化最高24.3%）</option></select>
+    <div class="hint"><!--pnid:cZ4hT7wMk9sQ2xR8vN1JbY-->综合分=动量权重×动量排名+(1-权重)×指标排名；动量90%稳健、92%年化最高</div></div>
+  <div class="fld"><label><!--pnid:pp9LSeWD1hWpMaIi7vsTfR-->策略模式</label><select id="cfgStrat">
+    <option value="trend"><!--pnid:ZVqOdUb28NhaHLhsrNTLQZ-->趋势过滤（原策略 · 无择时）</option>
+    <option selected value="dual_dyn"><!--pnid:YNqCgUpHrSFFhHarDUAm1n-->双动量持债 + 动态单/双周（默认）</option>
+    <option value="three"><!--pnid:pB9nxPKiqiGBqHGtmPPnwP-->三档择时（境外切换 · 保留对照）</option></select>
+    <div class="hint" id="stratHint"><!--pnid:8uijEPBFElRhrY3IqdGW1Q-->趋势过滤：价&gt;MA120、MA20&gt;MA60、溢价≤8% 后按综合分轮动</div></div>
+  <div class="fld" id="fldHedge"><label><!--pnid:1V3bxz04Kz06DLSc8bM0Bq--><!--pnid:hdgLbl02Wn7Rs--><!--pnid:pJLy3oWgs1yFOTVDRzshFC-->避险持仓模式</label><select id="cfgHedge">
+    <option value="bond"><!--pnid:FMpvYAGOe2hz9VdRYajD43--><!--pnid:hdgOpt04Bk2Zx--><!--pnid:OMCCAkhyvjDUwkuBTCM4Rx-->纯债511130（最稳，回撤-1%~-3%）</option>
+    <option selected value="auto"><!--pnid:TpOjSTJVCnnRiFffaCVvT3--><!--pnid:hdgOpt05Cm3Yw--><!--pnid:nEVPzEdkNpOdw0qhcRVJvw-->智能切换（默认·黄金MA120上方→债+黄金，下方→纯债）</option>
+    <option value="goldfilt"><!--pnid:UsKYdF2hmNLq4R3tksTya1--><!--pnid:hdgOpt06Dn4Xv--><!--pnid:lt6rm423In8fUzmf8iTEo3-->固定债+黄金各半（收益高但回撤-10%）</option></select>
+    <div class="hint"><!--pnid:f7wvBhnL5OCdrbKRnQxBwD--><!--pnid:hdgHint07Ep5Zu--><!--pnid:hIgSHoLKFgHXYKM4XnFTuR-->回测：避险期纯债+9.9%（回撤-1%）、债+黄金带过滤+38.6%（回撤-3%）；油气不是避险品，不提供。智能模式按518850的MA120自动切换</div></div>
+  <div class="fld" id="fldTiming"><label><!--pnid:uMfDqDa87PyVIBVNyDt2eE-->大盘动量择时</label>
+    <div class="sw"><span><!--pnid:TUTrs5C0Dv0XVBZQ7gvNLn-->沪深300 近 <b id="lbLabel"><!--pnid:wnDMLP5eNsSubxxFf6vXT4-->180</b><!--pnid:VmjpS116DrtWLegElXLfDk--> 日动量为负 → 触发避险</span><span class="mini" id="btnTiming"><!--pnid:USmyg33veYaBgUhST2QVse-->开</span></div>
+    <div class="hint"><!--pnid:PdPAxC9UvLKnY0B5n1ocvS-->仅双动量/三档模式生效；趋势过滤模式不使用择时</div>
+    <select id="cfgLb" style="margin-top:8px; width:100%; border:1px solid var(--line); border-radius:8px; padding:7px 10px; font-size:12px; color:var(--ink); background:#fff">
+      <option value="244"><!--pnid:TmCx8ZAdXvqETVRqhaV8g3-->244日（原口径·滞后但稳）</option>
+      <option selected value="180"><!--pnid:s919QiTSfsAJwV0iucBSKw-->180日（进取默认·2024转正）</option>
+      <option value="120"><!--pnid:ErnrOdDUsoBWNqoZSGUpD3-->120日（更灵敏·波动大）</option></select>
+    <div class="hint"><!--pnid:FZFw0hpRTq5thFtCYhpfi8-->窗口越短反应越快、但假信号更多。180日：2024由-2.1%→+3.4%、全期年化11.4%→14.8%（含25%波动+92%动量）</div></div>
+  <div class="fld" id="fldFreq"><label><!--pnid:74rRKvZRpqUiUUOlq3gSCo-->调仓节奏</label><select id="cfgFreq">
+    <option value="2"><!--pnid:sE3MtlcWnPofuoh6hPEnYk-->双周五（默认，摩擦最小）</option>
+    <option value="1"><!--pnid:uagihkRTfN5Iso3Q9peQ8B-->每周五（换手翻倍，成本敏感）</option>
+    <option value="0.5"><!--pnid:GdoOWXMOumgBq6ilRREvLh-->每月1日/16日（信号钝化）</option></select>
+    <div class="hint"><!--pnid:MR1DRxPhRUV4lKpFpIXUWn-->2020年来双动量口径：单周14.2%／双周12.9%；双动量+动态频率14.7%</div></div>
+  <div class="fld"><label><!--pnid:HNxBFKc67Zy0h7DD18WX3f-->执行时点</label><select id="cfgExec">
+    <option value="same"><!--pnid:cmwmqFWOSIryNhcViTMivB-->周五尾盘一次完成（回测 21.4%，无空仓）</option>
+    <option value="thu_fri"><!--pnid:shjFe1JIo6lqR4mhOGNOT9-->周四早盘卖 + 周五尾盘买（20.9%）</option>
+    <option value="wed_fri"><!--pnid:7N4SmoT3DnxY60hx0Ps8l6-->周三早盘卖 + 周五尾盘买（18.0%）</option></select>
+    <div class="hint"><!--pnid:aqqcr5hkCVcx3FCYgpC3LH-->买卖隔得越远，空仓越久；A股收益主要在日内</div></div>
+  <div class="fld"><label><!--pnid:qyV0ouHySbeoPYB8NxqrWc-->目标波动</label><select id="cfgVol">
+    <option value="0.15"><!--pnid:5r97KquNR7v9tzLxNSNGn8-->15%（保守，回撤更小）</option>
+    <option value="0.20"><!--pnid:k7SbtJ28cMp7a0Boy9Y9TI-->20%（稳健）</option>
+    <option selected value="0.25"><!--pnid:NEsKJIclwWB7xbrT02Axic-->25%（进取默认）</option>
+    <option value="0"><!--pnid:PV6m1mjXHHkvk0HnoVTBzu-->不控制（满仓）</option></select>
+    <div class="hint"><!--pnid:ocmPsFqc6GWfFUrPquo1nk-->波动高于目标就按比例减仓，钱进国债</div></div>
+  <div class="fld"><label><!--pnid:qoNIw7Gt2P9Ltytzqn5lf7-->点基金名称跳到哪个行情</label><select id="cfgSite">
+    <option value="qq"><!--pnid:RqfHS9srLko13I82HnWopV-->腾讯行情 gu.qq.com</option>
+    <option value="em"><!--pnid:PlCjY92XvztYWhm54rOgtJ-->东方财富 quote.eastmoney.com</option>
+    <option value="tt"><!--pnid:NMpHv6qRcThNzGQqm8r5Cd-->天天基金 fund.eastmoney.com</option>
+    <option value="jsl"><!--pnid:C6BmUYg9vWbEY0hB1Odt3b-->集思录（看溢价/折价）</option></select>
+    <div class="hint"><!--pnid:jok1vCDVxIn2KD0lITnQh0-->集思录适合查溢价，需登录</div></div>
+  <div class="fld"><label><!--pnid:3Bcu0DTU798wCj5agNK7xM-->跨境溢价参考（%，按代码，一行一个）</label>
+    <textarea id="cfgPrem" style="width:100%; height:88px; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12px; font-family:ui-monospace,monospace; color:var(--ink); background:#fff"></textarea>
+    <div class="hint"><!--pnid:YTSj14LdD4sVmO2noXEzFu-->内置 11-27 快照，超 8% 剔除</div></div>
+  <div class="sw"><span><!--pnid:2pFzNNvQ83bqXcpiJh9gzT-->调仓日自动留档推荐</span><span class="mini" id="btnAutoRec"><!--pnid:oQe1hN5NE4PF3DJiIMEeeL-->开</span></div>
+  <div class="sw"><span><!--pnid:LJjChmgg9YSP4VWBJyLDyV-->持仓记录</span><span class="mini" id="btnReset"><!--pnid:lhC0UXAG3SwYe7Av1BU4vc-->清空</span></div>
+  <div class="sw"><span><!--pnid:ktarYnNsX7U8nxfyyd4rh3-->行情缓存</span><span class="mini" id="btnClear"><!--pnid:ibhsWSg83gkjReYtViqdxD-->清除</span></div>
+  <div class="sw"><span><!--pnid:tUTbqJDf8gAxRSQzhT66ca-->持仓与设置</span><span class="mini" id="btnExport"><!--pnid:DabWcsH667PAbxY23utQZG-->导出</span></div>
+  <div class="sw"><span><!--pnid:mVsEH3VWOWzEXTSi9BhS80-->导入备份</span><span class="mini" id="btnImport"><!--pnid:91r4Lx9lPMpZER9TzwDVYO-->选择文件</span></div>
+  <input accept="application/json" id="fileImp" type="file" style="display:none">
+  <div class="note" style="margin-top:16px"><!--pnid:b6t6YGhL9c3x5Tsh8iwhAr-->
     历史数据计算，不构成投资建议。
   </div>
 </div></div>
 
 <div class="mask" id="mask2"></div>
 <div class="drawer" id="drawer2"><div class="dw">
-  <div class="dh"><b>实盘记录</b><span id="dw2Close">×</span></div>
+  <div class="dh"><b><!--pnid:UodYGzb3edK8InmavP5MnN-->实盘记录</b><span id="dw2Close"><!--pnid:zxrlSEMz2SrGh0nNmVaC7w-->×</span></div>
   <div id="pfForm"></div>
 </div></div>
 
 <div class="mask" id="mask3"></div>
 <div class="drawer" id="drawer3"><div class="dw">
-  <div class="dh"><b>调仓档案 · 最近半年</b><span id="dw3Close">×</span></div>
+  <div class="dh"><b><!--pnid:kdJ1Pohil8vXqUZ4K6Rsrk-->调仓档案 · 最近半年</b><span id="dw3Close"><!--pnid:VF2MzXfDDvA5V0D2bHWB6e-->×</span></div>
   <div class="seg" id="hisTabs">
-    <button class="on" data-t="rec">推荐</button>
-    <button data-t="act">实际</button>
-    <button data-t="cmp">对照</button>
+    <button class="on" data-t="rec"><!--pnid:s3HP2F5atLrnY4aeL72mBM-->推荐</button>
+    <button data-t="act"><!--pnid:PMn3BgzJVkCIFKWeiJZVEX-->实际</button>
+    <button data-t="cmp"><!--pnid:qItFOK0HYCD3q8tzGxxovN-->对照</button>
   </div>
   <div id="hisBody"></div>
 </div></div>
@@ -374,6 +513,7 @@ const POOL=[
  ['512800','银行ETF','A价值'],['515220','煤炭ETF','A价值'],['512690','酒ETF','A价值'],
  ['512200','房地产ETF','A价值'],['515030','新能源车ETF','A价值'],['562800','稀有金属ETF','A价值'],
  ['159326','电网设备ETF','A价值'],['159201','自由现金流ETF','A价值'],
+ ['510300','沪深300ETF','A价值'],['510050','上证50ETF','A价值'],['563360','A500ETF','A价值'],
  // 港股
  ['513130','恒生科技ETF','港股'],['513190','港股通金融','港股'],['513750','港股通非银','港股'],
  ['159735','港股消费ETF','港股'],['159545','港股红利低波','港股'],['513120','港股创新药','港股'],
@@ -404,7 +544,57 @@ const LS={
  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
  del(k){try{localStorage.removeItem(k)}catch(e){}}
 };
-const CFG=Object.assign({money:100000,freq:2,vol:0.20,topn:4,prem:null,exec:'same',site:'qq',autoRec:true},LS.get('fr_cfg',{}));
+const CFG_DEF={money:100000,freq:2,vol:0.25,topn:3,prem:null,exec:'same',site:'qq',autoRec:true,timing:true,strategy:'dual_dyn',momW:0.92,lb:180,dcaPlan:'smart40',autoPlan:true,hedgeMode:'auto',bullBoost:true,ma20Risk:true,_v:10};
+const _savedCfg=LS.get('fr_cfg',{});
+const CFG=Object.assign({},CFG_DEF,_savedCfg);
+// 进取型默认(v3)：择时180日+波动25%+动量92%。老缓存(<3)强制刷新这4项一次，其余保留用户设置
+if(!_savedCfg._v||_savedCfg._v<3){CFG.vol=0.25;CFG.momW=0.92;CFG.lb=180;CFG._v=3;}
+// v4：新增纳指定投方案(默认off，不影响原有轮动)
+if(CFG._v<4){CFG.dcaPlan='off';CFG._v=4;}
+// v5：新增智能决策总控(默认开)
+if(CFG._v<5){CFG.autoPlan=true;CFG._v=5;}
+// v6：新增避险模式(默认bond纯债，保持现状不变)
+if(CFG._v<6){CFG.hedgeMode='bond';CFG._v=6;}
+// v7：避险默认改为智能切换(auto)，老缓存强制升级一次
+if(CFG._v<7){CFG.hedgeMode='auto';CFG._v=7;}
+// v8：新增牛市增强开关(默认开)，老缓存强制升级一次
+if(CFG._v<8){CFG.bullBoost=true;CFG._v=8;}
+// v9：纳指定投升级为「智能40%自动档」(默认开启)，老缓存强制升级一次
+if(CFG._v<9){CFG.dcaPlan='smart40';CFG.autoPlan=true;CFG._v=9;}
+// v10：新增大盘MA20风控(默认开启)，老缓存强制升级一次
+if(CFG._v<10){CFG.ma20Risk=true;CFG._v=10;}
+if(!['off','smart40','agg','bal','con'].includes(CFG.dcaPlan)) CFG.dcaPlan='smart40';
+if(typeof CFG.autoPlan!=='boolean') CFG.autoPlan=true;
+if(!['bond','goldfilt','auto'].includes(CFG.hedgeMode)) CFG.hedgeMode='auto';
+if(typeof CFG.bullBoost!=='boolean') CFG.bullBoost=true;
+if(typeof CFG.ma20Risk!=='boolean') CFG.ma20Risk=true;
+let GOLD_TREND=null; // 黄金MA120状态缓存 {above,px,ma120,date}，由goldTrendOk()异步刷新
+if(typeof CFG.lb!=='number'||CFG.lb<60||CFG.lb>244) CFG.lb=180; // 择时窗口钳制60~244
+if(CFG.topn<3||CFG.topn>5) CFG.topn=3; // 已移除6只选项，钳制到3~5只
+if(CFG.exec==='mon_thu') CFG.exec='same'; // 已移除周一卖组合，回退到默认
+if(typeof CFG.momW!=='number'||CFG.momW<0||CFG.momW>1) CFG.momW=0.92; // 打分权重钳制
+const FOREIGN_RANK_MAX=3; // 三档择时：境外候选进全池前3才算“相对强”
+const STRAT_NAME={trend:'趋势过滤',dual_dyn:'双动量+动态频率',three:'三档择时'};
+function strat(){return CFG.strategy||'trend';}
+function effFreq(){return strat()==='dual_dyn'&&STATE&&STATE.adv?(STATE.adv==='单周'?1:2):CFG.freq;}
+function defenseActive(mkt){if(!mkt||mkt.m244>=0||!timingOn())return false;return strat()==='dual_dyn'||strat()==='three';}
+/* 牛市增强：沪深300近LB日动量为正、且开关开启时，选股自动切 4只 + 100%纯动量；熊市维持原配置。
+   回测2016年以来：年化15.87%→16.34%、夏普1.26→1.33、回撤-12.4%→-12.0%；2025 +32.8%→+44.4%。 */
+let BULL_BOOST_ACTIVE=false;
+function setBullBoost(mkt){ BULL_BOOST_ACTIVE=!!(CFG.bullBoost===true && mkt && typeof mkt.m244==='number' && mkt.m244>=0); }
+// 大盘MA20风控：沪深300(510300)收盘价<=近20日均线时目标仓位减半，站回恢复。
+// 与回测C方案一致：数据不足或避险期不降仓；直接复用met里已算好的px/ma20。
+function hsBelowMa20(met){
+  const m=(met&&met['510300'])||(met&&met['510050']);
+  return !!(m && typeof m.ma20==='number' && typeof m.px==='number' && m.px<=m.ma20);
+}
+function applyMa20Risk(k,met,defMode){
+  if(CFG.ma20Risk!==true) return k;
+  if(defMode==='bond'||defMode==='bond_gold') return k;
+  return hsBelowMa20(met)?k*0.5:k;
+}
+function effTopn(){ return BULL_BOOST_ACTIVE?4:CFG.topn; }
+function effMomW(){ return BULL_BOOST_ACTIVE?1:(typeof CFG.momW==='number'?CFG.momW:0.92); }
 let HOLD=LS.get('fr_hold',null);             // {date,items:[{code,weight,price,shares}],k}
 let PF=LS.get('fr_pf',null);                 // 实盘 {cash,total_in,items:[{code,shares,cost}],hist:[{d,v}]}
 /* 调仓档案：推荐快照 / 实际快照，只留最近半年（180 天） */
@@ -493,6 +683,227 @@ function fixSplits(a){ // a:[[date,o,c,h,l,v],...] 就地修正拆分/合并跳�
   }
   return a;
 }
+/* 大盘动量：沪深300 近 CFG.lb 交易日涨跌幅（进取型默认180日），回测口径 bench[i]/bench[i-lb]-1 */
+async function marketMomentum(){
+  const today=ymd(new Date()), ck='fr_idx_'+today+'_'+CFG.lb;
+  const cache=LS.get(ck,null);
+  if(cache&&typeof cache.m244==='number') return cache;
+  try{
+    const a=await getKline('000300',1);
+    const c=a.map(x=>x[2]);
+    const lb=CFG.lb||180;
+    if(c.length<lb+1) return null;
+    const m244=c[c.length-1]/c[c.length-1-lb]-1;
+    const out={m244:+m244.toFixed(4),date:a[a.length-1][0],close:c[c.length-1]};
+    LS.set(ck,out); return out;
+  }catch(e){ return null; } // 拉不到就不启用择时，不影响主流程
+}
+/* ===== 纳指定投信号（独立于轮动）：513100 MA200 择时 ===== */
+async function nasdaqDcaSignal(){
+  const today=ymd(new Date()), ck='fr_dca_513100_'+today;
+  const cache=LS.get(ck,null);
+  let sig=cache;
+  if(!sig||typeof sig.ma200!=='number'){
+    try{
+      const a=await getKline('513100',2);
+      const c=a.map(x=>x[2]);
+      if(c.length<200) return null;
+      const ma200=c.slice(-200).reduce((x,y)=>x+y,0)/200;
+      sig={px:+c[c.length-1].toFixed(3),ma200:+ma200.toFixed(3),
+           above:c[c.length-1]>ma200,date:a[a.length-1][0]};
+      LS.set(ck,sig);
+    }catch(e){ return null; }
+  }
+  return sig;
+}
+/* ===== 黄金趋势信号(避险模式用)：518850 MA120 过滤 ===== */
+async function goldTrendOk(){
+  const today=ymd(new Date()), ck='fr_gold_518850_'+today;
+  const cache=LS.get(ck,null);
+  if(cache&&typeof cache.ma120==='number'){ GOLD_TREND=cache; return cache; }
+  try{
+    const a=await getKline('518850',2);
+    const c=a.map(x=>x[2]);
+    if(c.length<120) return null;
+    const ma120=c.slice(-120).reduce((x,y)=>x+y,0)/120;
+    const sig={px:+c[c.length-1].toFixed(3),ma120:+ma120.toFixed(3),
+               above:c[c.length-1]>ma120,date:a[a.length-1][0]};
+    LS.set(ck,sig); GOLD_TREND=sig; return sig;
+  }catch(e){ return null; }
+}
+// 当前实际避险组合：根据模式+黄金趋势决定（同步读缓存，异步由goldTrendOk刷新）
+function hedgeHolding(){
+  const mode=CFG.hedgeMode||'auto';
+  let useGold=false;
+  if(mode==='goldfilt') useGold=true;                       // 固定债+黄金
+  else if(mode==='auto') useGold=!!(GOLD_TREND&&GOLD_TREND.above); // 智能：黄金站上MA120才配
+  if(useGold) return {sel:['511130','518850'],w:{'511130':0.5,'518850':0.5},label:'50%债+50%黄金',gold:true};
+  return {sel:['511130'],w:{'511130':1},label:'全仓511130',gold:false};
+}
+const DCA_PLAN={
+  off:{name:'未启用',irr:'—',dd:'—'},
+  smart40:{name:'智能40%·自动',irr:'15.75%',dd:'-9.0%',base:0,smart:true},
+  agg:{name:'进取·全定投',irr:'19.51%',dd:'-27.8%',base:3000,multLow:2.0},
+  bal:{name:'平衡·各半',irr:'17-18%',dd:'约-18%',base:1500,multLow:2.0},
+  con:{name:'稳健·全轮动',irr:'15.30%',dd:'-10.0%',base:0,multLow:1.0}
+};
+/* 智能40%档：A股动量为负→0%(全走轮动)；纳指在MA200下方→40%(加倍)；上方→20%
+   回测IRR15.75%/回撤-9.0%/月胜率82.3%/Calmar1.76，收益略低于进取但回撤更小、胜率更高 */
+function smart40Alloc(){
+  const mkt=STATE&&STATE.mkt;
+  const hs=mkt&&typeof mkt.m244==='number'?mkt.m244:null;
+  const weak=hs!==null&&hs<0;
+  if(weak) return {ratio:0,note:'A股近'+ (CFG.lb||180) +'日动量为负 → 本月不投纳指，资金全走轮动(自动持债)'};
+  return {ratio:null,note:''}; // ratio=null 表示需等纳指MA200信号
+}
+async function renderDca(){
+  const plan=CFG.dcaPlan||'off';
+  const box=$('dcaSec');
+  if(!box||plan==='off'){ if(box) box.style.display='none'; return; }
+  box.style.display='';
+  const P=DCA_PLAN[plan];
+  $('dcaPlanTag').textContent=P.name+' · 历史IRR '+P.irr+' / 回撤 '+P.dd;
+  const sig=await nasdaqDcaSignal();
+  const sa=smart40Alloc(); // 智能40%的A股信号(动作为负→不投)
+  if(!sig){
+    $('dcaAmt').textContent='—';
+    $('dcaSig').innerHTML='纳指数据暂不可用（需200日行情），本月定投请稍后刷新重试。';
+    $('dcaPx').textContent='—';$('dcaMa').textContent='—';$('dcaPos').textContent='—';
+  }else{
+    let amt,posTxt,sigTxt,cls;
+    if(P.smart){
+      // 智能40%：A股弱→0；纳指MA200下方→40%(1200)；上方→20%(600)
+      if(sa.ratio===0){
+        amt=0;posTxt='智能·避险';cls='';
+        sigTxt=sa.note+`。纳指 <b>${sig.px.toFixed(3)}</b>（MA200 ${sig.ma200.toFixed(3)}）仅作参考。`;
+      }else{
+        const ratio=sig.above?0.20:0.40;
+        amt=Math.round(3000*ratio);
+        posTxt=sig.above?'智能·20%':'智能·40%';cls=sig.above?'':' low';
+        sigTxt=`A股动量为正、纳指${sig.above?'站上':'跌破'}MA200（<b>${sig.px.toFixed(3)}</b> / ${sig.ma200.toFixed(3)}）→ 本月投 <b>${(ratio*100).toFixed(0)}%</b>（¥${fmt(amt)}），其余走轮动。系统自动按信号调整，无需手动。`;
+      }
+    }else{
+      amt=Math.round(P.base*(sig.above?1:P.multLow));
+      posTxt=sig.above?'MA200上方':'MA200下方';cls=sig.above?'':' low';
+      if(P.base===0){
+        sigTxt=`本月不投纳指，资金全部走轮动。纳指现价 <b>${sig.px.toFixed(3)}</b> ${sig.above?'高于':'低于'} MA200 <b>${sig.ma200.toFixed(3)}</b>，仅作参考。`;
+      }else{
+        sigTxt=`纳指现价 <b>${sig.px.toFixed(3)}</b> ${sig.above?'高于':'低于'} MA200 <b>${sig.ma200.toFixed(3)}</b> → 本月按${plan==='agg'?'进取':'平衡'}档投 <b>${sig.above?'基准额':'加倍额'}</b>。数据 ${sig.date}，月首个交易日执行。`;
+      }
+    }
+    $('dcaAmt').textContent=amt>0?('¥'+fmt(amt)):'¥0';
+    $('dcaAmt').className='amt'+cls;
+    $('dcaPx').textContent=sig.px.toFixed(3);
+    $('dcaMa').textContent=sig.ma200.toFixed(3);
+    $('dcaPos').textContent=posTxt;
+    $('dcaSig').innerHTML=sigTxt;
+  }
+  const cur=plan;
+  $('dcaPlans').innerHTML=
+    `<div class="${cur==='smart40'?'on':''}">■ 智能40%档：A股弱→不投、纳指MA200下→40%、上→20% · 自动执行，回撤仅-9%、胜率82%</div>`+
+    `<div class="${cur==='agg'?'on':''}">■ 进取档：全额定投纳指（MA200上投3000/下投6000）· 收益最高、需扛-27.8%回撤</div>`+
+    `<div class="${cur==='bal'?'on':''}">■ 平衡档：轮动各半（定投上1500/下3000）· IRR约17-18%、回撤约-18%</div>`+
+    `<div class="${cur==='con'?'on':''}">■ 稳健档：全部走轮动、不定投 · IRR 15.3%、回撤仅-10%</div>`;
+}
+/* ===== 智能决策总控：dyn4 自动选档 =====
+   规则(均事前可观测)：
+   - 沪深300近180日动量为负 → A股避险 → 稳健档(全轮动，自动持债)
+   - 沪深300为正 且 纳指在MA200下方 → 低位 → 进取档(全定投加倍)
+   - 沪深300为正 且 纳指在MA200上方 → 高位 → 平衡档(各半落袋)
+   回测：全期IRR 16.4%、回撤-13.7%、夏普2.25；6个起始年份夏普全面优于全定投 */
+let AUTO_PLAN=null; // 缓存当前推荐档位
+async function renderAutoPlan(){
+  const box=$('smartCard');
+  if(!box){return;}
+  if(CFG.autoPlan===false){box.style.display='none';return;}
+  box.style.display='';
+  // A股择时：复用 STATE.mkt.m244（已按 CFG.lb 计算，实为近lb日动量）
+  const hs=STATE&&STATE.mkt&&typeof STATE.mkt.m244==='number'?STATE.mkt.m244:null;
+  const hsNeg=hs!==null&&hs<0;
+  const sig=await nasdaqDcaSignal();
+  const ndAbove=sig?sig.above:null;
+  // 智能开启：自动生效「智能40%」档，按信号在 0%/20%/40% 间自动切换，无需手动采纳
+  const rec='smart40';
+  let role,ratio,ratioNote;
+  if(hsNeg){
+    ratio=0;role='智能40% · 当前避险不投';
+    ratioNote=`沪深300近${CFG.lb||180}日 <b>${hs!=null?(hs*100).toFixed(1)+'%':'为负'}</b>，A股处避险区 → 本月 <b>0%</b> 投纳指，资金全部走轮动(自动切债)。`;
+  }else if(ndAbove===false){
+    ratio=0.40;role='智能40% · 低位加配';
+    ratioNote=`A股动量为正、纳指跌破MA200（现价 <b>${sig.px.toFixed(3)}</b> / <b>${sig.ma200.toFixed(3)}</b>）→ 低位，本月投 <b>40%</b>（¥1200），其余走轮动。`;
+  }else if(ndAbove===true){
+    ratio=0.20;role='智能40% · 高位减配';
+    ratioNote=`A股动量为正、纳指站上MA200（现价 <b>${sig.px.toFixed(3)}</b> ≥ <b>${sig.ma200.toFixed(3)}</b>）→ 高位，本月投 <b>20%</b>（¥600），落袋为主。`;
+  }else{
+    ratio=0;role='智能40% · 数据待更新';
+    ratioNote=`纳指数据暂不可用，按A股信号保守处理 → 本月不投纳指，资金走轮动。`;
+  }
+  const desc=ratioNote+' <b>系统自动执行</b>，无需手动切换；回测IRR 15.75%、回撤-9.0%、月胜率82.3%。';
+  AUTO_PLAN=rec;
+  // 自动生效：智能开启时直接写入配置，无需点采纳
+  if(CFG.dcaPlan!==rec){ CFG.dcaPlan=rec; LS.set('fr_cfg',CFG); if($('cfgDcaPlan'))$('cfgDcaPlan').value=rec; renderDca(); }
+  $('smartPlan').textContent='智能40%';
+  $('smartRole').textContent=role;
+  $('smartDesc').innerHTML=desc;
+  // 常显提示：当前行情下纳指定投是否开启、投多少（直接回答"何时开定投"）
+  const dh=$('dcaHint');
+  if(dh){
+    if(ratio===0) dh.innerHTML='<span class="dt-off">纳指定投：<b class="dt-off">暂停(0%)</b> · A股避险期资金全走轮动</span>';
+    else dh.innerHTML=`纳指定投：<b>开启 · ${(ratio*100).toFixed(0)}%（¥${fmt(Math.round(3000*ratio))}）/月</b> · 智能自动档已生效`;
+  }
+  const hsTxt=hs!=null?((hs*100).toFixed(1)+'%'):'—';
+  const bbChip=BULL_BOOST_ACTIVE
+    ? `<span class="chip">牛市增强 <b>生效 · 4只/纯动量</b></span>`
+    : `<span class="chip">牛市增强 <b>${CFG.bullBoost?'待命(熊市)':'关闭'}</b></span>`;
+  const ma20Chip=CFG.ma20Risk===true
+    ? `<span class="chip">MA20风控 <b>${hsBelowMa20(STATE&&STATE.met)?'生效·半仓':'待命'}</b></span>`
+    : `<span class="chip">MA20风控 <b>关闭</b></span>`;
+  $('smartSig').innerHTML=
+    `<span class="chip">沪深300近${CFG.lb||180}日 <b>${hsTxt}</b> · ${hsNeg?'避险':'正常'}</span>`+
+    `<span class="chip">纳指MA200 <b>${sig?(sig.above?'上方':'下方'):'—'}</b></span>`+
+    bbChip+
+    ma20Chip+
+    `<span class="chip">智能40%回撤 <b>-9.0%</b></span>`;
+  const btn=$('smartApply');
+  btn.textContent='✓ 智能运行中';
+  btn.className='sbtn done';
+  // 避险模式建议：黄金518850在MA120上方→债+黄金，下方→纯债
+  const g=await goldTrendOk();
+  const ha=$('hedgeAdvice');
+  if(ha){
+    if(!g){
+      $('hedgeTxt').innerHTML='避险模式：黄金数据未取到，暂用 <b>纯债</b>（默认稳妥）';
+    }else{
+      const wantGold=g.above;
+      const recMode=wantGold?'goldfilt':'bond';
+      $('hedgeTxt').innerHTML=`避险模式：黄金 <b>${g.px.toFixed(2)}</b> 在MA120(<b>${g.ma120.toFixed(2)}</b>)${wantGold?'上方':'下方'} → 建议 <b>${wantGold?'债+黄金各半':'纯债511130'}</b>`;
+      const hsave=$('hedgeSave');
+      const modeApplied=CFG.hedgeMode==='auto'||CFG.hedgeMode===recMode;
+      hsave.textContent=modeApplied?'✓ 已适配':('切到'+HEDGE_NAME[recMode]);
+      hsave.className='hsave'+(modeApplied?' done':'');
+      hsave.onclick=()=>{ if(!modeApplied){CFG.hedgeMode=recMode;LS.set('fr_cfg',CFG);if($('cfgHedge'))$('cfgHedge').value=recMode;goldTrendOk().then(()=>replan());renderAutoPlan();} };
+    }
+  }
+  // 牛市增强建议：回测证明「常开」最优——内部按 m244>=0 自动生效、熊市自动休眠，无需手动来回切。
+  // 智能卡做的事：如实反映当前是「生效(4只+纯动量)」还是「休眠(熊市，维持原配置)」，并可一键回到最优(开启)。
+  const bb=$('bullAdvice');
+  if(bb){
+    const hsTxtB=hs!=null?((hs*100).toFixed(1)+'%'):'—';
+    const stateTxt=BULL_BOOST_ACTIVE?'生效中 · 4只+纯动量':(hs!==null&&hs<0?'休眠中 · 熊市维持原配置':'待命 · 动量为正即生效');
+    $('bullTxt').innerHTML=`牛市增强 ${hs!==null?`（沪深300近${CFG.lb||180}日 <b>${hsTxtB}</b>`:''}：<b>${stateTxt}</b> · 建议常开，系统自动适配牛熊`;
+    const bsave=$('bullSave');
+    const applied=CFG.bullBoost===true;
+    bsave.textContent=applied?'✓ 已开启':('开启增强 ›');
+    bsave.className='hsave'+(applied?' done':'');
+    bsave.onclick=()=>{ if(!applied){ CFG.bullBoost=true; LS.set('fr_cfg',CFG); if($('cfgBullBoost'))$('cfgBullBoost').value='1'; replan(); renderAutoPlan(); } };
+  }
+}
+const HEDGE_NAME={bond:'纯债',goldfilt:'债+黄金',auto:'智能'};
+function timingOn(){return CFG.timing!==false;} // 择时开关（双动量/三档生效）
+function inDefense(){ // 当前策略是否进入避险
+  return !!(STATE&&defenseActive(STATE.mkt));
+}
+
 async function loadAll(){
   const today=ymd(new Date());
   const ck='fr_k_'+today;
@@ -693,7 +1104,7 @@ function corr(a,b){
 }
 
 /* ================= 选股 ================= */
-/* 综合分 = 0.6×动量分横截面秩 + 0.4×通达信指标横截面秩 */
+/* 综合分 = momW×动量分横截面秩 + (1-momW)×通达信指标横截面秩，momW 由设置里「打分权重」控制 */
 function composeScores(met){
   const codes=Object.keys(met).filter(c=>met[c]&&met[c].score!=null);
   const pctRank=(key)=>{
@@ -708,7 +1119,7 @@ function composeScores(met){
   const km=rk('score'), kt=rk('tdx');
   codes.forEach(c=>{
     const a=rm[c], b=(rt[c]!=null?rt[c]:a);
-    met[c].comp=0.6*a+0.4*b;
+    const mw=effMomW(); met[c].comp=mw*a+(1-mw)*b;
     met[c].momRank=rm[c]; met[c].tdxRank=(rt[c]!=null?rt[c]:null);
     met[c].momR=km[c]; met[c].tdxR=(kt[c]!=null?kt[c]:null);
   });
@@ -736,11 +1147,12 @@ function pick(met){
     if(sel.length&&sel.some(x=>corr(met[x].rets,met[c].rets)>0.9)) return false;
     sel.push(c); return true;
   };
+  const topn=effTopn();
   // 1 先保留仍在缓冲区的旧持仓
   prev.map(c=>({c,r:rank[c]||999})).filter(o=>o.r<=8).sort((a,b)=>a.r-b.r)
-      .forEach(o=>{ if(sel.length<CFG.topn) add(o.c); });
+      .forEach(o=>{ if(sel.length<topn) add(o.c); });
   // 2 再用新面孔补齐
-  for(const c of sorted){ if(sel.length>=CFG.topn) break; add(c); }
+  for(const c of sorted){ if(sel.length>=topn) break; add(c); }
   return {sel,rank,passed,passedCount:passed.length};
 }
 function weights(sel,met){
@@ -758,6 +1170,21 @@ function weights(sel,met){
     if(!over&&!under) break;
   }
   return w;
+}
+/* 三档择时第2档：A股弱但境外强 → 只买境外；不足目标只数用511130补位 */
+function foreignDefense(met,passed,rank){
+  if(!met['511130']) return {sel:['511130'],w:{511130:1},mode:'bond',list:[]};
+  const cand=passed.filter(c=>CROSS(c)&&met[c]&&met[c].r126>0&&rank[c]<=FOREIGN_RANK_MAX)
+                   .sort((a,b)=>rank[a]-rank[b]);
+  const sel=[];
+  cand.forEach(c=>{
+    if(sel.length>=CFG.topn) return;
+    if(sel.some(x=>corr(met[x].rets,met[c].rets)>0.9)) return;
+    sel.push(c);
+  });
+  if(!sel.length) return {sel:['511130'],w:{511130:1},mode:'bond',list:cand};
+  if(sel.length<CFG.topn) sel.push('511130');
+  return {sel,w:weights(sel,met),mode:'foreign',list:sel.filter(c=>c!=='511130')};
 }
 function portVol(w,met){
   const codes=Object.keys(w); if(!codes.length) return 0.2;
@@ -782,11 +1209,12 @@ function isoWeek(d){
   return {y:t.getUTCFullYear(),w:Math.ceil(((t-y0)/86400000+1)/7)};
 }
 /* 以“周”为单位：奇数周为调仓周，取该周最后一个交易日（周五） */
-function nextRebal(cal){
+function nextRebal(cal,freq){
+  const ff=(freq===undefined?effFreq():freq);
   const last=cal[cal.length-1];
   const d0=new Date(last+'T00:00:00');
   const isOdd=w=>(w%2)===1;
-  if(CFG.freq===0.5){
+  if(ff===0.5){
     const y=d0.getFullYear(), m=d0.getMonth();
     const cands=[new Date(y,m,1),new Date(y,m,16),new Date(y,m+1,1),new Date(y,m+1,16)];
     for(const c of cands){
@@ -797,7 +1225,7 @@ function nextRebal(cal){
       }
     }
   }
-  const every=CFG.freq===1?1:2;
+  const every=ff===1?1:2;
   // 当前周是否调仓周 & 今天是否为该周最后交易日
   const curOdd=isOdd(isoWeek(d0).w);
   const isRebal=(every===1||curOdd)&&d0.getDay()===5;
@@ -809,7 +1237,7 @@ function nextRebal(cal){
   return {isRebal,date:ymd(d),tdays:Math.max(1,Math.round(days*5/7))};
 }
 /* ================= 执行时点 ================= */
-const EXEC={same:{s:5,b:5},thu_fri:{s:4,b:5},wed_fri:{s:3,b:5},mon_thu:{s:1,b:4}};
+const EXEC={same:{s:5,b:5},thu_fri:{s:4,b:5},wed_fri:{s:3,b:5}};
 const DOW=['周日','周一','周二','周三','周四','周五','周六'];
 const GAPCOST={0:0,1:0.5,2:3.4,3:8.5};
 function execPlan(cal,next){
@@ -817,10 +1245,11 @@ function execPlan(cal,next){
   const d0=new Date(last+'T00:00:00');
   const e=EXEC[CFG.exec||'same']||EXEC.same;
   const dow=d0.getDay();
-  const every=CFG.freq===1?1:2;
-  const rebalWeek=CFG.freq===0.5?true:((every===1)||(isoWeek(d0).w%2===1));
+  const ff=(STATE&&STATE.effFreq)?STATE.effFreq:CFG.freq;
+  const every=ff===1?1:2;
+  const rebalWeek=ff===0.5?true:((every===1)||(isoWeek(d0).w%2===1));
   let role='none';
-  if(CFG.freq===0.5){
+  if(ff===0.5){
     if(dow===0||dow===6) role='none';
     else role=next.isRebal?'both':'before';
   }else if(dow===0||dow===6||!rebalWeek){ role='none'; }
@@ -830,7 +1259,7 @@ function execPlan(cal,next){
   else if(dow<e.b){ role='between'; }
   else if(dow===e.b){ role='buy'; }
   else { role='done'; }
-  const gap=CFG.freq===0.5?0:Math.max(0,e.b-e.s);
+  const gap=ff===0.5?0:Math.max(0,e.b-e.s);
   return {role,gap,sDow:e.s,bDow:e.b,sDowTxt:DOW[e.s],bDowTxt:DOW[e.b],
           rebalWeek,cost:GAPCOST[gap]!==undefined?GAPCOST[gap]:8.5};
 }
@@ -963,7 +1392,7 @@ function renderPfEditor(){
     <div class="fld" style="flex:1"><label>累计投入本金（元）</label>
       <input id="pfIn" type="number" inputmode="decimal" value="${E.total_in||0}"></div>
   </div>
-  <div class="hint" style="font-size:10.5px;color:#A8A092;margin:-6px 0 14px;line-height:1.6">
+  <div class="hint" style="font-size:10.5px;color:var(--dim2);margin:-6px 0 14px;line-height:1.6">
     从外部转进来的钱；填 0 则按「成本＋现金」推算</div>`;
 
   h+=`<div class="ehd"><span>标的</span><span>份额</span><span>成本价</span><span></span></div>`;
@@ -990,7 +1419,7 @@ function renderPfEditor(){
       <input id="pfManCode" maxlength="6" inputmode="numeric" placeholder="6位代码，如 501018"
         style="width:100%;height:40px;border:1px solid var(--line);border-radius:8px;background:#fff;
         padding:0 11px;font-size:14px;font-family:inherit;color:var(--ink)">
-      <div class="hint" style="font-size:10.5px;color:#A8A092;margin-top:4px">池外品种会额外拉一次腾讯行情，缓存在本地</div>
+      <div class="hint" style="font-size:10.5px;color:var(--dim2);margin-top:4px">池外品种会额外拉一次腾讯行情，缓存在本地</div>
     </div></div>`;
 
   h+=`<div class="sw"><span>从上方建议组合导入</span>
@@ -999,7 +1428,7 @@ function renderPfEditor(){
     h+=`<div class="sw"><span>从上次调仓记录导入（${HOLD.date}）</span><span class="mini" id="pfImpHold">导入</span></div>`;
   h+=`<div class="sw"><span>清空实盘记录</span><span class="mini" id="pfClear">清空</span></div>`;
   h+=`<button class="btn p" id="pfSave" style="width:100%;margin-top:18px">保存</button>`;
-  h+=`<div class="hint" style="font-size:10.5px;color:#A8A092;margin-top:10px;line-height:1.65">
+  h+=`<div class="hint" style="font-size:10.5px;color:var(--dim2);margin-top:10px;line-height:1.65">
     重建＝按建议组合重置；追加＝只补缺的；份数 0 保存时删除。改份额记得同改现金，否则累计收益会跳。</div>`;
   $('pfForm').innerHTML=h;
 
@@ -1084,6 +1513,15 @@ async function loadExt(){
 }
 
 /* ================= 渲染 ================= */
+function marketPhase(){
+  const d=new Date(), day=d.getDay(), m=d.getHours()*60+d.getMinutes();
+  if(day===0||day===6) return '休市';
+  if(m<9*60+30) return '盘前';
+  if(m<11*60+30) return '盘中';
+  if(m<13*60) return '午休';
+  if(m<15*60) return '盘中';
+  return '收盘后';
+}
 let STATE=null;
 function renderAll(){
   const {met,cal,sel,w,k,pv,passed,passedCount,next}=STATE;
@@ -1093,13 +1531,30 @@ function renderAll(){
   $('poolMeta').textContent=(POOL.length+ACTIVE.length)+'只自选 · 动量+指标双打分';
   $('rankMeta').textContent=POOL.length+'只 · 按综合分';
   $('meta').innerHTML=`数据 <b>${last}</b> · ${Object.keys(met).filter(c=>met[c]).length}/${POOL.length} 只 · `+
-    (new Date().getHours()<15?'盘中':'收盘后');
+    marketPhase();
   // 动作卡
   const plan=execPlan(cal,next);
   const isRebal=plan.role==='both'||plan.role==='sell'||plan.role==='buy';
   const broken=holdingCodes().filter(c=>met[c]&&!met[c].trend);
   const same=(EXEC[CFG.exec||'same']||EXEC.same).s===(EXEC[CFG.exec||'same']||EXEC.same).b;
-  if(plan.role==='sell'){
+  const def=inDefense(), fmode=STATE.defMode;
+  if(def&&strat()==='dual_dyn'){
+    const hh=hedgeHolding();
+    $('actTitle').textContent=fmode==='bond_gold'?'大盘转弱 · 债金避险':'大盘转弱 · 持债避险';
+    $('actTitle').className='big warn';
+    const goldNote=fmode==='bond_gold'
+      ?`按避险模式买入 <b>50% 511130 + 50% 518850黄金</b>（黄金在MA120上方，趋势向好）`
+      :`按双动量择时${CFG.hedgeMode==='auto'&&GOLD_TREND&&!GOLD_TREND.above?'（智能模式：黄金在MA120下方，切纯债）':''}全仓 <b>511130</b>、暂停轮动`;
+    $('actSub').innerHTML=`沪深300 近${CFG.lb||180}日 <b>${(STATE.mkt.m244*100).toFixed(1)}%</b> 为负，${goldNote}。<br>动量为正后自动恢复；调仓节奏按宽度自动（当前 ${STATE.adv||'双周'}），下次评估 ${next.date}`;
+  }else if(def&&fmode==='foreign'){
+    $('actTitle').textContent='大盘转弱 · 切换境外';
+    $('actTitle').className='big warn';
+    $('actSub').innerHTML=`沪深300 近${CFG.lb||180}日 <b>${(STATE.mkt.m244*100).toFixed(1)}%</b> 为负，但境外票近6月仍为正且进全池前3，按三档择时改买 <b>${STATE.foreignSel.map(c=>NAME[c]||c).join('、')}</b>。<br>大盘动量转正后恢复常规轮动；下次评估 ${next.date}`;
+  }else if(def){
+    $('actTitle').textContent='大盘转弱 · 持债避险';
+    $('actTitle').className='big warn';
+    $('actSub').innerHTML=`沪深300 近${CFG.lb||180}日 <b>${(STATE.mkt.m244*100).toFixed(1)}%</b> 为负，境外候选也不强，全仓 <b>511130</b>。<br>动量为正后自动恢复；下次评估 ${next.date}`;
+  }else if(plan.role==='sell'){
     $('actTitle').textContent='今日早盘：只卖不买';
     $('actTitle').className='big warn';
     $('actSub').innerHTML=`<b>10:00 前</b>卖出换手部分，资金放货基；<b>${plan.bDowTxt} 14:50</b> 再买。空仓 ${plan.gap} 个交易日`;
@@ -1175,6 +1630,12 @@ function renderAll(){
     <div class="sub">100份整数倍的余钱，可放场内货基</div></div>
     <div class="r"><div class="wt dim">—</div><div class="amt">¥${fmt(gap)}</div></div></div>`;
 
+  if(def&&STATE.rawSel&&STATE.rawSel.length){
+    const ref=STATE.rawSel.map(c=>nl(c)).join('、');
+    h+=`<div class="item"><div class="l"><div class="nm">未执行的常规轮动票<span class="dim"> 参考</span></div>
+      <div class="sub">${ref} · 大盘动量转正后恢复</div></div>
+      <div class="r"><div class="wt dim">0%</div><div class="amt">不执行</div></div></div>`;
+  }
   $('combo').innerHTML=h||'<div class="fold-tip">今日无标的同时满足趋势与溢价条件，建议全部转入511130</div>';
 
   // 操作清单
@@ -1377,6 +1838,7 @@ function regimeOf(data,cal,met){
   const disp=Math.sqrt(r63.reduce((a,b)=>a+(b-mm)*(b-mm),0)/r63.length);
   return {above,er,slope,vol,disp};
 }
+function regimeAdv(R){return (R&&R.above>=0.15&&R.above<0.30)?'单周':'双周';}
 function renderRegime(){
   const R=regimeOf(STATE.data,STATE.cal,STATE.met);
   if(!R){$('rgName').textContent='数据不足';$('rgWhy').textContent='';return;}
@@ -1399,7 +1861,8 @@ function renderRegime(){
   STATE.adv=adv;
   $('rgName').textContent=name;
   const ad=$('rgAdv'); ad.textContent='建议 '+adv; ad.className='adv'+(dark?' dn':'');
-  $('rgMeta').textContent=(CFG.freq===1?'当前设单周':'当前设双周');
+  const ff=(STATE&&STATE.effFreq)?STATE.effFreq:CFG.freq;
+  $('rgMeta').textContent=(STRAT_NAME[strat()]||'趋势过滤')+' · '+(ff===1?'单周':ff===0.5?'半月':'双周');
   $('rgWhy').innerHTML=why;
   const bar=(nm,ratio,val,warn)=>`<div class="rgr"><span class="nm">${nm}</span>`+
     `<span class="tr"><i class="${warn?'w':''}" style="width:${Math.round(Math.min(Math.max(ratio,0),1)*100)}%"></i></span>`+
@@ -1412,7 +1875,30 @@ function renderRegime(){
     bar('等权波动',R.vol/0.30,pw+'%',R.vol>0.24);
   $('rgNote').innerHTML='历史：宽度 15–30% 时单周月均超额 +0.82pp（胜率 67%，24 个月）；>40% 时 -0.56pp（20 个月）。'+
     '60 次安慰剂检验里该判别的年化只排 85 分位——它是环境描述，不是择时信号。阈值附近别来回改设置。';
-  $('rgApply').style.display=(CFG.freq===(adv==='单周'?1:2))?'none':'inline';
+  $('rgApply').style.display=(strat()==='dual_dyn'||ff===(adv==='单周'?1:2))?'none':'inline';
+  // 策略 / 大盘动量择时状态
+  const tm=$('tmLine'), s=strat();
+  if(s==='trend'){
+    tm.className='tmline';
+    tm.innerHTML='<span class="tmsw">择时 未启用</span>趋势过滤模式：只看价/均线/溢价，不做大盘择时；频率按手动设置。';
+  }else if(!STATE.mkt){
+    tm.className='tmline'; tm.innerHTML='<span class="tmsw">择时 关</span>大盘动量数据未取到，本次不启用择时，按常规轮动。';
+  }else{
+    const neg=STATE.mkt.m244<0, on=timingOn(), fmode=STATE.defMode;
+    tm.className='tmline'+(neg?' dn':'');
+    const head=`<span class="tmsw">择时 ${on?'开':'关'}</span>`+
+      `沪深300 近${CFG.lb||180}日 <b>${(STATE.mkt.m244*100).toFixed(1)}%</b>（${STATE.mkt.date}）`;
+    if(s==='dual_dyn'){
+      const hedgeTxt=fmode==='bond_gold'?'<b> · 为负 → 50%债+50%黄金避险、暂停轮动</b>':'<b> · 为负 → 全仓 511130 持债、暂停轮动</b>';
+      tm.innerHTML=head+(neg
+        ?(on?hedgeTxt:'<b> · 为负，但择时已关闭，仍按轮动</b>')
+        :' · 为正 → 正常轮动')+` · 频率自动：${STATE.adv||adv}`;
+    }else{
+      tm.innerHTML=head+(!neg?' · 为正 → 正常轮动'
+          :(!on?'<b> · 为负，但择时已关闭，仍按轮动</b>'
+               :(fmode==='foreign'?'<b> · 为负 → 境外相对强，切境外</b>':'<b> · 为负 → 境外不强，全仓 511130</b>')));
+    }
+  }
 }
 
 /* ================= 调仓档案：推荐 / 实际 / 对照 ================= */
@@ -1443,7 +1929,8 @@ function autoRecDay(){
   if(!STATE||!STATE.cal||!STATE.cal.length) return false;
   const last=STATE.cal[STATE.cal.length-1];
   const d=new Date(last+'T00:00:00');
-  if(CFG.freq===0.5){
+  const ff=(STATE&&STATE.effFreq)?STATE.effFreq:CFG.freq;
+  if(ff===0.5){
     const day=d.getDate();
     if(day===1||day===16) return true;
     const prev=STATE.cal[STATE.cal.length-2];
@@ -1475,7 +1962,7 @@ function renderHistory(){
 function renderRecTab(){
   const list=RECS.slice().sort(descRec);
   const d=STATE?STATE.cal[STATE.cal.length-1]:'—';
-  let h=`<div class="hint" style="font-size:10.5px;color:#A8A092;margin-bottom:10px;line-height:1.6">
+  let h=`<div class="hint" style="font-size:10.5px;color:var(--dim2);margin-bottom:10px;line-height:1.6">
     只留最近 ${HIST_DAYS} 天 · 共 ${list.length} 条 · 调仓日自动留档${CFG.autoRec===false?'已关（设置里可开）':'已开'}</div>`;
   h+=`<button class="btn s" id="hisSaveRec" style="width:100%;margin-bottom:10px">存档当前建议（${d}）</button>`;
   if(!list.length) h+=`<div class="fold-tip">还没有推荐记录。点上面存档，或在调仓日打开页面自动留档。<br>过去没有存过推荐，无法凭空补出；实际成交可在「实际」页按日期补录。</div>`;
@@ -1545,7 +2032,7 @@ function renderActForm(){
       <button class="btn s" id="actFillRec">按推荐填入</button>
       <button class="btn s" id="actFillPf">按实盘填入</button></div>
     <button class="btn p" id="actSave" style="width:100%;margin-top:10px">保存实际调仓</button>
-    <div class="hint" style="font-size:10.5px;color:#A8A092;margin-top:9px;line-height:1.6">
+    <div class="hint" style="font-size:10.5px;color:var(--dim2);margin-top:9px;line-height:1.6">
       保存时按上次实际持仓自动算出买卖单；份额填 0 的行会删除。</div>
   </div>`;
 }
@@ -1564,7 +2051,7 @@ function syncActForm(){
 }
 function renderActTab(){
   const list=ACTS.slice().sort(descRec);
-  let h=`<div class="hint" style="font-size:10.5px;color:#A8A092;margin-bottom:10px;line-height:1.6">
+  let h=`<div class="hint" style="font-size:10.5px;color:var(--dim2);margin-bottom:10px;line-height:1.6">
     只留最近 ${HIST_DAYS} 天 · 共 ${list.length} 条 · 填实际成交后的持仓与现金</div>`;
   if(HIS_EDIT){ h+=renderActForm(); }
   h+=`<button class="btn s" id="actNew" style="width:100%;margin-bottom:10px">+ 新增实际记录</button>`;
@@ -1716,13 +2203,28 @@ async function run(){
       const m=calc(a); if(m) met[c]=m;
     });
     if(Object.keys(met).length<20) throw new Error('有效数据不足');
+    const mkt=await marketMomentum();
+    setBullBoost(mkt); // 牛市增强：动量为正→4只+纯动量
     const {sel,rank,passed,passedCount}=pick(met);
-    const w=weights(sel,met);
-    const pv=portVol(w,met);
-    const k=CFG.vol>0?Math.min(1,CFG.vol/Math.max(pv,0.02)):1;
-    const next=nextRebal(cal);
-    STATE={met,cal,sel,w,k,pv,passed,passedCount,rank,next,data};
+    const rawSel=sel.slice(), rawW=weights(sel,met);
+    let finSel=sel, finW=rawW, defMode='normal', foreignSel=[];
+    if(defenseActive(mkt)){
+      if(strat()==='dual_dyn'){ const h=hedgeHolding(); finSel=h.sel; finW=h.w; defMode=h.gold?'bond_gold':'bond'; }
+      else{ const d=foreignDefense(met,passed,rank); finSel=d.sel; finW=d.w; defMode=d.mode; foreignSel=d.list; }
+    }
+    const w=finW;
+    const pv=portVol(rawW,met);
+    let k=(defMode==='bond'||defMode==='bond_gold')?1:(CFG.vol>0?Math.min(1,CFG.vol/Math.max(pv,0.02)):1);
+    k=applyMa20Risk(k,met,defMode); // MA20风控：沪深300跌破MA20时仓位减半
+    const adv=regimeAdv(regimeOf(data,cal,met));
+    const effFreq=strat()==='dual_dyn'?(adv==='单周'?1:2):CFG.freq;
+    const next=nextRebal(cal,effFreq);
+    STATE={met,cal,sel:finSel,w,k,pv,passed,passedCount,rank,next,data,mkt,rawSel,rawW,defMode,foreignSel,adv,effFreq};
     renderAll();
+    renderDca(); // 纳指定投信号（独立于轮动）
+    renderAutoPlan(); // 智能决策总控
+    // 预取黄金趋势：auto/goldfilt模式下，异步拿到MA120后重算避险持仓（首次同步用纯债兜底）
+    if(CFG.hedgeMode&&CFG.hedgeMode!=='bond') goldTrendOk().then(g=>{if(g) replan();});
     maybeAutoRec();
     loadExt();
     setMsg('已更新');
@@ -1740,26 +2242,60 @@ $('btnRefresh').onclick=()=>{LS.del('fr_k_'+ymd(new Date()));setProg(0);run();};
 $('gear').onclick=()=>openDrawer(true);
 $('mask').onclick=()=>openDrawer(false);
 $('dwClose').onclick=()=>openDrawer(false);
+function updateStratUI(){
+  const s=strat();
+  $('fldTiming').style.display=(s==='trend')?'none':'';
+  $('fldFreq').style.display=(s==='dual_dyn')?'none':'';
+  $('btnTiming').textContent=timingOn()?'开':'关';
+  const H={
+    trend:'价>MA120、MA20>MA60、跨境溢价≤8% 后按综合分轮动；不做大盘择时，频率手动。2020年来年化9.9%。',
+    dual_dyn:'沪深300近180日为负→全仓511130；为正→正常轮动。频率按宽度自动：15–30%单周、其余双周。2016年来年化14.8%、回撤-12.4%。',
+    three:'沪深300为负时境外强则切境外、否则持债。2020年来年化11.2%，保留作对照。'
+  };
+  $('stratHint').textContent=H[s]||H.trend;
+}
 function openDrawer(on){
   $('mask').classList.toggle('on',on); $('drawer').classList.toggle('on',on);
   if(on){
     $('cfgMoney').value=CFG.money; $('cfgFreq').value=String(CFG.freq);
-    $('cfgTop').value=String(CFG.topn||4);
+    $('cfgStrat').value=strat(); updateStratUI();
+    if($('cfgDcaPlan')) $('cfgDcaPlan').value=CFG.dcaPlan||'off';
+    if($('cfgAutoPlan')) $('cfgAutoPlan').value=CFG.autoPlan===false?'0':'1';
+    if($('cfgHedge')) $('cfgHedge').value=CFG.hedgeMode||'auto';
+    if($('cfgBullBoost')) $('cfgBullBoost').value=CFG.bullBoost===false?'0':'1';
+    if($('cfgMa20Risk')) $('cfgMa20Risk').value=CFG.ma20Risk===false?'0':'1';
+    $('cfgTop').value=String(CFG.topn||3);
+    if($('cfgMomW')) $('cfgMomW').value=String(CFG.momW!=null?CFG.momW:0.92);
+    if($('cfgLb')){$('cfgLb').value=String(CFG.lb||180); $('lbLabel').textContent=String(CFG.lb||180);}
     $('cfgExec').value=CFG.exec||'same';
     $('cfgVol').value=CFG.vol===0?'0':CFG.vol.toFixed(2);
     $('cfgSite').value=CFG.site||'qq';
     $('btnAutoRec').textContent=CFG.autoRec===false?'关':'开';
+    $('btnTiming').textContent=timingOn()?'开':'关';
     $('cfgPrem').value=Object.keys(CFG.prem||{}).map(k=>k+' '+CFG.prem[k]).join('\n');
   }
 }
 function replan(){
   if(!STATE||!STATE.met) return;
+  setBullBoost(STATE.mkt); // 牛市增强：随行情与配置切换即时刷新
   const {sel,rank,passed,passedCount}=pick(STATE.met);
-  const w=weights(sel,STATE.met);
-  const pv=portVol(w,STATE.met);
-  const k=CFG.vol>0?Math.min(1,CFG.vol/Math.max(pv,0.02)):1;
-  Object.assign(STATE,{sel,w,k,pv,rank,passed,passedCount});
+  const rawW=weights(sel,STATE.met);
+  const pv=portVol(rawW,STATE.met);
+  const def=defenseActive(STATE.mkt);
+  let finSel=sel, finW=rawW, defMode='normal', foreignSel=[];
+  if(def){
+    if(strat()==='dual_dyn'){ const h=hedgeHolding(); finSel=h.sel; finW=h.w; defMode=h.gold?'bond_gold':'bond'; }
+    else{ const d=foreignDefense(STATE.met,passed,rank); finSel=d.sel; finW=d.w; defMode=d.mode; foreignSel=d.list; }
+  }
+  let k=(defMode==='bond'||defMode==='bond_gold')?1:(CFG.vol>0?Math.min(1,CFG.vol/Math.max(pv,0.02)):1);
+  k=applyMa20Risk(k,STATE.met,defMode); // MA20风控：沪深300跌破MA20时仓位减半
+  const adv=regimeAdv(regimeOf(STATE.data,STATE.cal,STATE.met));
+  const effFreq=strat()==='dual_dyn'?(adv==='单周'?1:2):CFG.freq;
+  Object.assign(STATE,{sel:finSel,w:finW,k,pv,rank,passed,passedCount,rawSel:sel,rawW,defMode,foreignSel,adv,effFreq});
+  STATE.next=nextRebal(STATE.cal,effFreq);
   renderAll();
+  renderDca(); // 纳指定投信号（独立于轮动，异步）
+  renderAutoPlan(); // 智能决策总控
 }
 
 $('rgApply').onclick=()=>{
@@ -1769,16 +2305,38 @@ $('rgApply').onclick=()=>{
   if($('cfgFreq')) $('cfgFreq').value=String(CFG.freq);
   replan();
 };
-['cfgMoney','cfgFreq','cfgVol','cfgTop','cfgExec'].forEach(id=>{
+$('cfgStrat').addEventListener('change',()=>{
+  CFG.strategy=$('cfgStrat').value; LS.set('fr_cfg',CFG);
+  updateStratUI(); replan();
+  setMsg('策略已切换为「'+(STRAT_NAME[strat()]||'趋势过滤')+'」');
+});
+$('rgMeta').onclick=()=>openDrawer(true);
+['cfgMoney','cfgFreq','cfgVol','cfgTop','cfgExec','cfgMomW','cfgLb','cfgDcaPlan','cfgAutoPlan','cfgHedge','cfgBullBoost','cfgMa20Risk'].forEach(id=>{
   $(id).addEventListener('change',()=>{
     if(id==='cfgMoney') CFG.money=Math.max(1000,+$('cfgMoney').value||100000);
     if(id==='cfgFreq') CFG.freq=+$('cfgFreq').value;
     if(id==='cfgVol') CFG.vol=+$('cfgVol').value;
     if(id==='cfgTop') CFG.topn=+$('cfgTop').value;
+    if(id==='cfgMomW') CFG.momW=+$('cfgMomW').value;
     if(id==='cfgExec') CFG.exec=$('cfgExec').value;
+    if(id==='cfgLb'){CFG.lb=+$('cfgLb').value; $('lbLabel').textContent=String(CFG.lb);}
+    if(id==='cfgDcaPlan'){CFG.dcaPlan=$('cfgDcaPlan').value; if(CFG.dcaPlan!=='smart40'&&CFG.autoPlan){CFG.autoPlan=false; if($('cfgAutoPlan'))$('cfgAutoPlan').value='0';} setMsg(CFG.dcaPlan==='smart40'?'已启用智能40%自动档':'已切到手动档，智能接管暂停');}
+    if(id==='cfgAutoPlan'){CFG.autoPlan=$('cfgAutoPlan').value==='1';}
+    if(id==='cfgHedge'){CFG.hedgeMode=$('cfgHedge').value; goldTrendOk().then(()=>replan()); replan();}
+    if(id==='cfgBullBoost') CFG.bullBoost=$('cfgBullBoost').value==='1';
+    if(id==='cfgMa20Risk') CFG.ma20Risk=$('cfgMa20Risk').value==='1';
     LS.set('fr_cfg',CFG); replan();
   });
 });
+// 智能40%自动生效中；点击暂停智能、切回稳健手动档
+$('smartApply').onclick=()=>{
+  CFG.autoPlan=false;              // 暂停智能接管
+  CFG.dcaPlan='con';               // 切回稳健手动档
+  LS.set('fr_cfg',CFG);
+  if($('cfgAutoPlan')) $('cfgAutoPlan').value='0';
+  if($('cfgDcaPlan')) $('cfgDcaPlan').value='con';
+  renderDca(); renderAutoPlan();
+};
 $('cfgPrem').addEventListener('change',()=>{
   const o={};
   $('cfgPrem').value.split('\n').forEach(l=>{
@@ -1807,6 +2365,11 @@ $('btnAutoRec').onclick=()=>{
   CFG.autoRec=CFG.autoRec===false;
   LS.set('fr_cfg',CFG); $('btnAutoRec').textContent=CFG.autoRec?'开':'关';
   setMsg('调仓日自动留档已'+(CFG.autoRec?'开启':'关闭'));
+};
+$('btnTiming').onclick=()=>{
+  CFG.timing=!timingOn();
+  LS.set('fr_cfg',CFG); $('btnTiming').textContent=timingOn()?'开':'关';
+  replan(); setMsg('大盘动量择时已'+(timingOn()?'开启':'关闭'));
 };
 
 $('lnkBreadth').onclick=e=>{
@@ -1846,16 +2409,15 @@ function toggleRank(on){
   if(on) $('secRank').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-/* 折叠：记忆上次状态 */
-function bindFold(btnId,boxId,key){
+/* 折叠：记忆上次状态（统一箭头按钮，文案只保留主体，箭头由 CSS ::after 提供） */
+function bindFold(btnId,boxId,key,txtOff,txtOn){
   const b=$(btnId), box=$(boxId);
   if(!b||!box) return;
-  const isSmall=b.tagName==='SMALL';
-  const txtOn=isSmall?'收起 ‹':'收起', txtOff=isSmall?'展开 ›':'看依据';
+  const off=txtOff||'看依据', on=txtOn||'收起';
   const set=open=>{
     box.classList.toggle('hidden',!open);
     b.classList.toggle('on',open);
-    b.textContent=open?txtOn:txtOff;
+    b.textContent=open?on:off;
   };
   set(!!LS.get(key,0));
   b.onclick=()=>{
@@ -1863,8 +2425,25 @@ function bindFold(btnId,boxId,key){
     set(open); LS.set(key,open?1:0);
   };
 }
-bindFold('rgTog','rgFold','fr_f1');
-bindFold('ruleTog','ruleFull','fr_f2');
+bindFold('rgTog','rgFold','fr_f1','看依据','收起');
+bindFold('ruleTog','ruleFull','fr_f2','展开','收起');
+bindFold('actTog','actSub','fr_f3','看说明','收起');
+
+/* 一键展开/收起全部解释性说明：每个模块默认只给结论，说明按需展开 */
+let XP_ON=false;
+function applyExplain(on){
+  XP_ON=on;
+  document.body.classList.toggle('xp-on',on);
+  const btn=$('xpBtn');
+  if(btn){btn.textContent=on?'收起说明':'说明';btn.classList.toggle('on',on);}
+  const sf=$('smartFold'); if(sf) sf.open=on; // 智能卡研判理由
+  [['rgTog','rgFold','看依据','收起'],['ruleTog','ruleFull','展开','收起'],['actTog','actSub','看说明','收起']].forEach(pair=>{
+    const b=$(pair[0]), box=$(pair[1]);
+    if(b&&box){box.classList.toggle('hidden',!on);b.classList.toggle('on',on);b.textContent=on?pair[3]:pair[2];}
+  });
+}
+if($('xpBtn')) $('xpBtn').onclick=()=>applyExplain(!XP_ON);
+applyExplain(false); // 默认全部折叠，仅显示结论
 
 run();
 </script>
